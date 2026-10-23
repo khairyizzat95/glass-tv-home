@@ -12,6 +12,9 @@ final class SoundEffects {
     private static int soundNav;
     private static int soundSelect;
     private static boolean ready;
+    private static boolean navEnabled = true;
+    private static boolean selectEnabled = true;
+    private static float volumeScale = 1.0f;
 
     private SoundEffects() {
     }
@@ -35,15 +38,21 @@ final class SoundEffects {
         }
     }
 
+    static void configure(boolean navOn, boolean selectOn, int volume) {
+        navEnabled = navOn;
+        selectEnabled = selectOn;
+        volumeScale = Math.max(0f, Math.min(1f, volume / 100f));
+    }
+
     static void playNav() {
-        if (ready && soundPool != null && soundNav != 0) {
-            soundPool.play(soundNav, 0.65f, 0.65f, 0, 0, 1.0f);
+        if (navEnabled && ready && soundPool != null && soundNav != 0) {
+            soundPool.play(soundNav, 0.65f * volumeScale, 0.65f * volumeScale, 0, 0, 1.0f);
         }
     }
 
     static void playSelect() {
-        if (ready && soundPool != null && soundSelect != 0) {
-            soundPool.play(soundSelect, 0.85f, 0.85f, 0, 0, 1.0f);
+        if (selectEnabled && ready && soundPool != null && soundSelect != 0) {
+            soundPool.play(soundSelect, 0.85f * volumeScale, 0.85f * volumeScale, 0, 0, 1.0f);
         }
     }
 

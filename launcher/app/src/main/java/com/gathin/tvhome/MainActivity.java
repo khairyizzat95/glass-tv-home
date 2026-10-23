@@ -273,6 +273,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         density = getResources().getDisplayMetrics().density;
         // config.xml, overlaid by config.json from a pushed theme (see Config and tools/theme.sh).
         Config cfg = Config.load(this);
+        SoundEffects.configure(cfg.soundNavEnabled, cfg.soundSelectEnabled, cfg.soundVolume);
         COLUMNS = cfg.columns;
         reducedMotion = cfg.reducedMotion;
         liveTvPkg = cfg.liveTvPackage;
@@ -550,10 +551,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             open(systemIntent(Settings.ACTION_WIFI_SETTINGS));
             return true;
         });
-        btnSettings.setOnClickListener(v -> open(systemIntent(Settings.ACTION_SETTINGS)));
+        btnSettings.setOnClickListener(v ->
+                startActivity(new Intent(this, LauncherSettingsActivity.class)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)));
         btnSettings.setOnLongClickListener(v -> {
-            if (!moduleCards) return false;   // off: a long press does nothing, as before the feature
-            showModuleCards();
+            if (moduleCards) { showModuleCards(); return true; }
+            open(systemIntent(Settings.ACTION_SETTINGS));
             return true;
         });
 

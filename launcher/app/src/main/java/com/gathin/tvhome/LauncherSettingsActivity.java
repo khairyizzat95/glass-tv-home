@@ -1,0 +1,255 @@
+package com.gathin.tvhome;
+
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Intent;
+import android.graphics.Color;
+import android.os.Bundle;
+import android.provider.Settings;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.SeekBar;
+import android.widget.Switch;
+import android.widget.TextView;
+
+import java.io.File;
+
+public class LauncherSettingsActivity extends Activity {
+
+    private File cfgDir;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_settings);
+
+        cfgDir = Config.dir(this);
+        Config cfg = Config.load(this);
+
+        TextView btnSys = findViewById(R.id.btnSystemSettings);
+        btnSys.setOnClickListener(v ->
+                startActivity(new Intent(Settings.ACTION_SETTINGS)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)));
+
+        LinearLayout content = findViewById(R.id.settingsContent);
+
+        // ── Icons ──────────────────────────────────────────────────────────
+        addSection(content, "Icons");
+        addTextSetting(content, "Icon Pack",
+                "Package name (empty = system icons)",
+                cfg.iconPack,
+                v -> Config.save(cfgDir, "icon_pack", v));
+
+        // ── Wallpaper ──────────────────────────────────────────────────────
+        addSection(content, "Wallpaper");
+        addToggle(content, "Aerial Views Video Wallpaper",
+                "Use AerialViews app as animated background",
+                cfg.aerialWallpaper,
+                v -> Config.save(cfgDir, "aerial_wallpaper", v));
+
+        // ── Sleep Timer ────────────────────────────────────────────────────
+        addSection(content, "Sleep Timer");
+        addListSetting(content, "Default Sleep Timer",
+                new String[]{"Off", "15 min", "30 min", "60 min", "2 hours"},
+                new int[]{0, 15, 30, 60, 120},
+                cfg.sleepTimerMinutes,
+                v -> Config.save(cfgDir, "sleep_timer_minutes", v));
+
+        // ── Sound ──────────────────────────────────────────────────────────
+        addSection(content, "Sound");
+        addToggle(content, "Navigation Sound",
+                "Play sound when navigating tiles",
+                cfg.soundNavEnabled,
+                v -> Config.save(cfgDir, "sound_nav_enabled", v));
+        addToggle(content, "Selection Sound",
+                "Play sound when selecting an app",
+                cfg.soundSelectEnabled,
+                v -> Config.save(cfgDir, "sound_select_enabled", v));
+        addSeekBar(content, "Sound Volume",
+                cfg.soundVolume, 0, 100,
+                v -> Config.save(cfgDir, "sound_volume", v));
+
+        // ── Restart note ───────────────────────────────────────────────────
+        TextView note = new TextView(this);
+        note.setText("Changes take effect after the launcher restarts.");
+        note.setTextColor(0xFF808090);
+        note.setTextSize(13f);
+        note.setPadding(0, 32, 0, 0);
+        content.addView(note);
+    }
+
+    // ── Section header ─────────────────────────────────────────────────────
+
+    private void addSection(LinearLayout parent, String title) {
+        TextView tv = new TextView(this);
+        tv.setText(title.toUpperCase());
+        tv.setTextColor(0xFF6E6EBF);
+        tv.setTextSize(12f);
+        tv.setLetterSpacing(0.12f);
+        tv.setPadding(0, 40, 0, 12);
+        parent.addView(tv);
+
+        View divider = new View(this);
+        divider.setBackgroundColor(0x33FFFFFF);
+        parent.addView(divider, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 1));
+    }
+
+    // ── Toggle row ─────────────────────────────────────────────────────────
+
+    private void addToggle(LinearLayout parent, String title, String subtitle,
+                           boolean initial, Callback<Boolean> onChange) {
+        LinearLayout row = makeRow(parent, title, subtitle);
+        Switch sw = new Switch(this);
+        sw.setChecked(initial);
+        sw.setOnCheckedChangeListener((b, checked) -> onChange.accept(checked));
+        row.addView(sw);
+        row.setOnClickListener(v -> sw.setChecked(!sw.isChecked()));
+    }
+
+    // ── Text-input setting ─────────────────────────────────────────────────
+
+    private void addTextSetting(LinearLayout parent, String title, String hint,
+                                String initial, Callback<String> onChange) {
+        LinearLayout row = makeRow(parent, title, initial.isEmpty() ? hint : initial);
+        TextView preview = (TextView) row.getChildAt(0); // the label column
+        row.setFocusable(true);
+        row.setOnClickListener(v -> {
+            EditText et = new EditText(this);
+            et.setText(initial);
+            et.setHint(hint);
+            new AlertDialog.Builder(this)
+                    .setTitle(title)
+                    .setView(et)
+                    .setPositiveButton("Save", (d, w) -> {
+                        String val = et.getText().toString().trim();
+                        onChange.accept(val);
+                        updateSubtitle(row, val.isEmpty() ? hint : val);
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        });
+    }
+
+    // ── List-choice setting ────────────────────────────────────────────────
+
+    private void addListSetting(LinearLayout parent, String title,
+                                String[] labels, int[] values, int currentValue,
+                                Callback<Integer> onChange) {
+        int idx = 0;
+        for (int i = 0; i < values.length; i++) if (values[i] == currentValue) { idx = i; break; }
+        final int[] sel = {idx};
+        LinearLayout row = makeRow(parent, title, labels[idx]);
+        row.setFocusable(true);
+        row.setOnClickListener(v -> new AlertDialog.Builder(this)
+                .setTitle(title)
+                .setSingleChoiceItems(labels, sel[0], (d, which) -> sel[0] = which)
+                .setPositiveButton("OK", (d, w) -> {
+                    onChange.accept(values[sel[0]]);
+                    updateSubtitle(row, labels[sel[0]]);
+                })
+                .setNegativeButton("Cancel", null)
+                .show());
+    }
+
+    // ── Seek-bar setting ───────────────────────────────────────────────────
+
+    private void addSeekBar(LinearLayout parent, String title,
+                            int initial, int min, int max, Callback<Integer> onChange) {
+        LinearLayout col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+        col.setPadding(0, 20, 0, 20);
+
+        LinearLayout titleRow = new LinearLayout(this);
+        titleRow.setOrientation(LinearLayout.HORIZONTAL);
+        TextView lbl = makeLabel(title);
+        TextView val = new TextView(this);
+        val.setText(String.valueOf(initial));
+        val.setTextColor(0xFFB0B0C8);
+        val.setTextSize(14f);
+        titleRow.addView(lbl, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        titleRow.addView(val);
+        col.addView(titleRow);
+
+        SeekBar sb = new SeekBar(this);
+        sb.setMax(max - min);
+        sb.setProgress(initial - min);
+        sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar s, int p, boolean user) {
+                int v = p + min;
+                val.setText(String.valueOf(v));
+                if (user) onChange.accept(v);
+            }
+            @Override public void onStartTrackingTouch(SeekBar s) {}
+            @Override public void onStopTrackingTouch(SeekBar s) {}
+        });
+        col.addView(sb);
+        parent.addView(col);
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────────
+
+    private LinearLayout makeRow(LinearLayout parent, String title, String subtitle) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        row.setPadding(0, 20, 0, 20);
+        row.setFocusable(true);
+        row.setClickable(true);
+        row.setBackground(getFocusableBackground());
+
+        LinearLayout col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+
+        TextView titleTv = makeLabel(title);
+        col.addView(titleTv);
+
+        if (subtitle != null && !subtitle.isEmpty()) {
+            TextView subTv = new TextView(this);
+            subTv.setText(subtitle);
+            subTv.setTextColor(0xFF808090);
+            subTv.setTextSize(13f);
+            subTv.setTag("subtitle");
+            col.addView(subTv);
+        }
+
+        row.addView(col, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+        parent.addView(row);
+        return row;
+    }
+
+    private TextView makeLabel(String text) {
+        TextView tv = new TextView(this);
+        tv.setText(text);
+        tv.setTextColor(0xFFEEEEF5);
+        tv.setTextSize(16f);
+        return tv;
+    }
+
+    private void updateSubtitle(LinearLayout row, String text) {
+        ViewGroup col = (ViewGroup) row.getChildAt(0);
+        if (col == null) return;
+        for (int i = 0; i < col.getChildCount(); i++) {
+            View v = col.getChildAt(i);
+            if ("subtitle".equals(v.getTag())) {
+                ((TextView) v).setText(text);
+                return;
+            }
+        }
+    }
+
+    private android.graphics.drawable.StateListDrawable getFocusableBackground() {
+        android.graphics.drawable.StateListDrawable sld = new android.graphics.drawable.StateListDrawable();
+        sld.addState(new int[]{android.R.attr.state_focused},
+                new android.graphics.drawable.ColorDrawable(0x33FFFFFF));
+        sld.addState(new int[]{},
+                new android.graphics.drawable.ColorDrawable(Color.TRANSPARENT));
+        return sld;
+    }
+
+    interface Callback<T> {
+        void accept(T value);
+    }
+}
