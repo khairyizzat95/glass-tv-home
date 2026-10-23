@@ -557,7 +557,7 @@
                     android:drawablePadding="0dp"
                     android:alpha="0.5"
                     android:contentDescription="Sleep timer"
-                    android:drawableStart="@drawable/ic_lock" />
+                    android:drawableStart="@drawable/ic_moon" />
 
                 <TextView
                     android:id="@+id/btnSettings"
