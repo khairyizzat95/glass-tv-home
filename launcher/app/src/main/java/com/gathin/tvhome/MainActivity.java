@@ -84,6 +84,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private String sourcePanelAction;
 
     private static final int REQUEST_ICON_PICKER = 4821;
+    private static final int REQUEST_IMAGE_PICK   = 4822;
+    /** Package name of the app whose icon is being replaced via the image picker. */
+    private String pendingIconPkg;
     private IconPackLoader iconPackLoader;
     private AppAdapter adapter;
     private RecyclerView grid;
@@ -1678,13 +1681,35 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         addInputRow(rows, () -> closeMenu(false), R.drawable.ic_info, getString(R.string.tile_app_info), -1,
                 () -> adapter.openAppInfo(adapter.positionOf(key)));
+        final String iconPkg = key.contains("/") ? key.split("/")[0] : key;
         addInputRow(rows, () -> closeMenu(false), R.drawable.ic_settings,
                 "Change Icon", -1, () -> {
                     Intent intent = new Intent(this, IconPickerActivity.class);
-                    intent.putExtra(IconPickerActivity.EXTRA_PACKAGE,
-                            key.contains("/") ? key.split("/")[0] : key);
+                    intent.putExtra(IconPickerActivity.EXTRA_PACKAGE, iconPkg);
                     startActivityForResult(intent, REQUEST_ICON_PICKER);
                 });
+        addInputRow(rows, () -> closeMenu(false), R.drawable.ic_settings,
+                "Upload Icon", -1, () -> {
+                    pendingIconPkg = iconPkg;
+                    Intent pick = new Intent(Intent.ACTION_GET_CONTENT);
+                    pick.setType("image/*");
+                    pick.addCategory(Intent.CATEGORY_OPENABLE);
+                    startActivityForResult(Intent.createChooser(pick, "Select icon image"), REQUEST_IMAGE_PICK);
+                });
+        java.util.Map<String, String> currentCustom = CustomIconStore.load(Config.dir(this));
+        if (currentCustom.containsKey(iconPkg)) {
+            addInputRow(rows, () -> closeMenu(false), R.drawable.ic_info,
+                    "Reset Icon", -1, () -> {
+                        File cfgDir = Config.dir(this);
+                        // Remove local PNG if present
+                        new File(new File(cfgDir, "icons"), iconPkg + ".png").delete();
+                        java.util.Map<String, String> updated = CustomIconStore.load(cfgDir);
+                        updated.remove(iconPkg);
+                        adapter.setCustomIcons(updated);
+                        reloadApps(false);
+                        new Thread(() -> CustomIconStore.save(cfgDir, iconPkg, null)).start();
+                    });
+        }
         panel.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         int width = Math.max((int) (190 * density), panel.getMeasuredWidth());
         // Under the app when there is room; over it in the dock, which sits near the bottom.
@@ -1712,6 +1737,35 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 adapter.setCustomIcons(updated);
                 reloadApps(false);
                 new Thread(() -> CustomIconStore.save(cfgDir, pkg, value)).start();
+            }
+        } else if (requestCode == REQUEST_IMAGE_PICK && resultCode == RESULT_OK
+                && data != null && pendingIconPkg != null) {
+            android.net.Uri uri = data.getData();
+            if (uri != null) {
+                String pkg = pendingIconPkg;
+                pendingIconPkg = null;
+                File cfgDir = Config.dir(this);
+                File iconsDir = new File(cfgDir, "icons");
+                iconsDir.mkdirs();
+                File dest = new File(iconsDir, pkg + ".png");
+                new Thread(() -> {
+                    try (java.io.InputStream in = getContentResolver().openInputStream(uri);
+                         java.io.FileOutputStream out = new java.io.FileOutputStream(dest)) {
+                        byte[] buf = new byte[8192];
+                        int n;
+                        while (in != null && (n = in.read(buf)) > 0) out.write(buf, 0, n);
+                        CustomIconStore.save(cfgDir, pkg, "__local__");
+                    } catch (Exception e) {
+                        android.util.Log.w("TvHome.IconUpload", "copy failed: " + e.getMessage());
+                        return;
+                    }
+                    runOnUiThread(() -> {
+                        java.util.Map<String, String> updated = CustomIconStore.load(cfgDir);
+                        updated.put(pkg, "__local__");
+                        adapter.setCustomIcons(updated);
+                        reloadApps(false);
+                    });
+                }).start();
             }
         }
     }

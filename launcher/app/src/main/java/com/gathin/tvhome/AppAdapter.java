@@ -248,7 +248,11 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
             Drawable icon = null;
             if (banner == null) {
                 String customValue = (customIcons != null) ? customIcons.get(pkg) : null;
-                if (customValue != null) {
+                if ("__local__".equals(customValue)) {
+                    java.io.File iconFile = new java.io.File(
+                            new java.io.File(Config.dir(ctx), "icons"), pkg + ".png");
+                    if (iconFile.exists()) icon = android.graphics.drawable.Drawable.createFromPath(iconFile.getAbsolutePath());
+                } else if (customValue != null) {
                     int sep = customValue.indexOf('/');
                     if (sep > 0) {
                         String packPkg = customValue.substring(0, sep);
