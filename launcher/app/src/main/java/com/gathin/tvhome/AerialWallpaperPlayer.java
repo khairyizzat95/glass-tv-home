@@ -187,15 +187,27 @@ final class AerialWallpaperPlayer implements TextureView.SurfaceTextureListener 
         try { return textureView.getBitmap(); } catch (Exception e) { return null; }
     }
 
-    /** Re-queries the AerialViews service so category/filter changes take effect immediately. */
+    /** Re-queries the AerialViews service so category/filter changes take effect immediately.
+     *  Unbinds and rebinds so AerialViews rebuilds its playlist from current settings. */
     void refresh() {
         wallpapers = null;
         wallpaperIndex = 0;
         retryCount = 0;
-        if (providerService != null) {
-            fetchWallpapers();
+        retryHandler.removeCallbacksAndMessages(null);
+        // Unbind to force AerialViews to drop its cached playlist.
+        if (bound) {
+            try { ctx.unbindService(connection); } catch (Exception ignored) {}
+            bound = false;
+            providerService = null;
         }
-        // If not yet bound, onServiceConnected → fetchWallpapers() handles it automatically.
+        // Rebind — onServiceConnected → fetchWallpapers() with fresh settings.
+        Intent intent = new Intent(BIND_ACTION);
+        intent.setComponent(new ComponentName(AERIAL_PACKAGE, AERIAL_SERVICE_CLASS));
+        try {
+            bound = ctx.bindService(intent, connection, Context.BIND_AUTO_CREATE);
+        } catch (Exception e) {
+            Log.w(TAG, "refresh rebind failed: " + e.getMessage());
+        }
     }
 
     void stop() {
