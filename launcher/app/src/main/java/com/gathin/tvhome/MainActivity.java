@@ -1678,15 +1678,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         addInputRow(rows, () -> closeMenu(false), R.drawable.ic_info, getString(R.string.tile_app_info), -1,
                 () -> adapter.openAppInfo(adapter.positionOf(key)));
-        if (iconPackLoader != null && iconPackLoader.isActive()) {
-            addInputRow(rows, () -> closeMenu(false), R.drawable.ic_settings,
-                    "Change Icon", -1, () -> {
-                        Intent intent = new Intent(this, IconPickerActivity.class);
-                        intent.putExtra(IconPickerActivity.EXTRA_PACKAGE,
-                                key.contains("/") ? key.split("/")[0] : key);
-                        startActivityForResult(intent, REQUEST_ICON_PICKER);
-                    });
-        }
+        addInputRow(rows, () -> closeMenu(false), R.drawable.ic_settings,
+                "Change Icon", -1, () -> {
+                    Intent intent = new Intent(this, IconPickerActivity.class);
+                    intent.putExtra(IconPickerActivity.EXTRA_PACKAGE,
+                            key.contains("/") ? key.split("/")[0] : key);
+                    startActivityForResult(intent, REQUEST_ICON_PICKER);
+                });
         panel.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         int width = Math.max((int) (190 * density), panel.getMeasuredWidth());
         // Under the app when there is room; over it in the dock, which sits near the bottom.

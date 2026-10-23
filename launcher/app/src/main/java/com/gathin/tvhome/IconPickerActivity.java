@@ -84,9 +84,21 @@ public class IconPickerActivity extends Activity {
             List<IconPackLoader.IconEntry> filtered = filter(icons, defaultFilter);
             runOnUiThread(() -> {
                 allIcons = icons;
-                search.setText(defaultFilter);
-                search.setSelection(search.getText().length());
-                gridAdapter.setItems(filtered);
+                if (icons.isEmpty()) {
+                    search.setVisibility(android.view.View.GONE);
+                    grid.setVisibility(android.view.View.GONE);
+                    TextView empty = new TextView(IconPickerActivity.this);
+                    empty.setText("No icon pack selected.\nGo to Launcher Settings → Icons to choose one.");
+                    empty.setTextColor(0xFF909098);
+                    empty.setTextSize(16f);
+                    empty.setGravity(android.view.Gravity.CENTER);
+                    empty.setPadding(0, (int)(48*dp), 0, 0);
+                    root.addView(empty);
+                } else {
+                    search.setText(defaultFilter);
+                    search.setSelection(search.getText().length());
+                    gridAdapter.setItems(filtered);
+                }
             });
         });
 
