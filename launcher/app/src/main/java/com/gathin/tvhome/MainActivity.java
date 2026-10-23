@@ -1706,9 +1706,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             if (pkg != null && iconPack != null && drawable != null) {
                 String value = iconPack + "/" + drawable;
                 File cfgDir = Config.dir(this);
-                new Thread(() -> CustomIconStore.save(cfgDir, pkg, value)).start();
-                adapter.setCustomIcons(CustomIconStore.load(cfgDir));
+                // Update in-memory map immediately so the tile reloads without waiting for disk I/O.
+                java.util.Map<String, String> updated = CustomIconStore.load(cfgDir);
+                updated.put(pkg, value);
+                adapter.setCustomIcons(updated);
                 reloadApps(false);
+                new Thread(() -> CustomIconStore.save(cfgDir, pkg, value)).start();
             }
         }
     }
