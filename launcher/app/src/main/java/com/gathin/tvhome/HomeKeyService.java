@@ -4,6 +4,8 @@ import android.accessibilityservice.AccessibilityService;
 import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.PixelFormat;
+import android.graphics.Typeface;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Handler;
@@ -11,9 +13,13 @@ import android.os.Looper;
 import android.os.SystemClock;
 import android.provider.Settings;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -36,6 +42,10 @@ public class HomeKeyService extends AccessibilityService {
     private boolean isProcessingForceStop = false;
     private boolean isWaitingForConfirmDialog = false;
 
+    private WindowManager windowManager;
+    private TextView overlayView;
+    private boolean overlayShown = false;
+
     /** Scancodes of remote buttons that should open Settings (config.xml, settings_key_scancodes). */
     private int[] settingsScancodes = new int[0];
 
@@ -43,12 +53,14 @@ public class HomeKeyService extends AccessibilityService {
     protected void onServiceConnected() {
         super.onServiceConnected();
         instance = this;
+        windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         settingsScancodes = getResources().getIntArray(R.array.settings_key_scancodes);
         Log.i(TAG, "HomeKeyService connected");
     }
 
     @Override
     public void onDestroy() {
+        hideTimerOverlay();
         if (instance == this) instance = null;
         super.onDestroy();
     }
@@ -65,23 +77,78 @@ public class HomeKeyService extends AccessibilityService {
 
     /** Called by SleepTimer.Listener.onExpired() to put the TV to sleep. */
     public static void triggerSleep() {
-        Log.d(TAG, "triggerSleep: delegating to sleepScreen");
+        Log.d(TAG, "triggerSleep: hiding overlay then sleeping");
+        if (instance != null) instance.hideTimerOverlay();
         if (!sleepScreen()) {
             Log.w(TAG, "triggerSleep: HomeKeyService not running — cannot sleep TV");
         }
     }
 
-    /** Shows the countdown overlay on top of all apps (implemented in Task 4). */
-    public void showTimerOverlay() {}
+    /** Shows the countdown overlay on top of all apps via TYPE_ACCESSIBILITY_OVERLAY. */
+    public void showTimerOverlay() {
+        if (overlayShown || windowManager == null) return;
+        homeHandler.post(() -> {
+            if (overlayShown) return;
+            TextView tv = new TextView(this);
+            tv.setTextColor(0xFFFFFFFF);
+            tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 32);
+            tv.setTypeface(Typeface.DEFAULT_BOLD);
+            tv.setBackgroundColor(0xCC000000);
+            tv.setPadding(28, 12, 28, 12);
+            tv.setGravity(Gravity.CENTER);
+            tv.setShadowLayer(4f, 0f, 1f, 0x80000000);
 
-    /** Updates the countdown text in the overlay (implemented in Task 4). */
-    public void updateTimerOverlay(long remainingMs) {}
+            WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                            | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                            | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                    PixelFormat.TRANSLUCENT);
+            lp.gravity = Gravity.TOP | Gravity.START;
+            lp.x = 48;
+            lp.y = 48;
 
-    /** Hides the countdown overlay (implemented in Task 4). */
-    public void hideTimerOverlay() {}
+            try {
+                windowManager.addView(tv, lp);
+                overlayView = tv;
+                overlayShown = true;
+                Log.d(TAG, "timer overlay shown");
+            } catch (Exception e) {
+                Log.w(TAG, "showTimerOverlay failed: " + e.getMessage());
+            }
+        });
+    }
 
-    /** True when the overlay window is currently shown (implemented in Task 4). */
-    public boolean isOverlayShown() { return false; }
+    /** Updates the countdown text in the overlay; shows it if not yet visible. */
+    public void updateTimerOverlay(long remainingMs) {
+        if (!overlayShown) showTimerOverlay();
+        homeHandler.post(() -> {
+            if (overlayView != null) {
+                overlayView.setText(SleepTimer.formatMs(remainingMs));
+            }
+        });
+    }
+
+    /** Removes the countdown overlay. */
+    public void hideTimerOverlay() {
+        homeHandler.post(() -> {
+            if (!overlayShown || overlayView == null) return;
+            try {
+                windowManager.removeView(overlayView);
+                Log.d(TAG, "timer overlay hidden");
+            } catch (Exception e) {
+                Log.w(TAG, "hideTimerOverlay failed: " + e.getMessage());
+            } finally {
+                overlayView = null;
+                overlayShown = false;
+            }
+        });
+    }
+
+    /** True when the overlay window is currently attached. */
+    public boolean isOverlayShown() { return overlayShown; }
 
     /** Returns the running service instance or null if not connected. */
     public static HomeKeyService getInstance() { return instance; }

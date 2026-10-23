@@ -557,13 +557,25 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             btnSleepTimer.setOnClickListener(v -> {
                 SleepTimer t = SleepTimer.get();
                 int next = SleepTimer.nextPresetMinutes(t.getActiveMinutes());
-                if (next == 0) { t.cancel(); } else { t.start(next); }
+                if (next == 0) {
+                    t.cancel();
+                    HomeKeyService svc = HomeKeyService.getInstance();
+                    if (svc != null) svc.hideTimerOverlay();
+                } else {
+                    t.start(next);
+                    HomeKeyService svc = HomeKeyService.getInstance();
+                    if (svc != null) svc.showTimerOverlay();
+                }
                 updateTimerDisplay();
                 Config.save(Config.dir(this), "sleep_timer_minutes", SleepTimer.get().getActiveMinutes());
             });
         }
         SleepTimer.get().setListener(new SleepTimer.Listener() {
-            @Override public void onTick(long ms) { updateTimerDisplay(); }
+            @Override public void onTick(long ms) {
+                updateTimerDisplay();
+                HomeKeyService svc = HomeKeyService.getInstance();
+                if (svc != null) svc.updateTimerOverlay(ms);
+            }
             @Override public void onExpired() {
                 updateTimerDisplay();
                 HomeKeyService.triggerSleep();
@@ -572,6 +584,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         if (cfg.sleepTimerMinutes > 0) {
             SleepTimer.get().start(cfg.sleepTimerMinutes);
             updateTimerDisplay();
+            HomeKeyService svc = HomeKeyService.getInstance();
+            if (svc != null) svc.showTimerOverlay();
         }
 
         // Keep focus on the top bar at its ends and at the top: Android's focus finder would otherwise
