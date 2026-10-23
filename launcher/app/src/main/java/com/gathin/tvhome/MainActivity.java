@@ -693,27 +693,13 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
     }
 
-    /** Swaps the clock/date block for a countdown when the sleep timer is active, or restores the clock. */
+    /** Updates the sleep-timer button alpha; the clock is always shown (overlay handles the countdown). */
     private void updateTimerDisplay() {
         SleepTimer t = SleepTimer.get();
-        View clock = findViewById(R.id.clock);
-        View dateBlock = findViewById(R.id.dateBlock);
-        TextView timerDisplay = findViewById(R.id.timerDisplay);
+        View timerDisplay = findViewById(R.id.timerDisplay);
         View btnSleepTimer = findViewById(R.id.btnSleepTimer);
-        if (t.isActive()) {
-            if (clock != null) clock.setVisibility(View.GONE);
-            if (dateBlock != null) dateBlock.setVisibility(View.GONE);
-            if (timerDisplay != null) {
-                timerDisplay.setVisibility(View.VISIBLE);
-                timerDisplay.setText(SleepTimer.formatMs(t.getRemainingMs()));
-            }
-            if (btnSleepTimer != null) btnSleepTimer.setAlpha(1.0f);
-        } else {
-            if (clock != null) clock.setVisibility(View.VISIBLE);
-            if (dateBlock != null) dateBlock.setVisibility(View.VISIBLE);
-            if (timerDisplay != null) timerDisplay.setVisibility(View.GONE);
-            if (btnSleepTimer != null) btnSleepTimer.setAlpha(0.5f);
-        }
+        if (timerDisplay != null) timerDisplay.setVisibility(View.GONE);
+        if (btnSleepTimer != null) btnSleepTimer.setAlpha(t.isActive() ? 1.0f : 0.5f);
     }
 
     /** Puts a picture behind everything, cross-fading from the previous one when asked. */
