@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.PixelFormat;
 import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Handler;
@@ -16,9 +17,11 @@ import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -43,8 +46,31 @@ public class HomeKeyService extends AccessibilityService {
     private boolean isWaitingForConfirmDialog = false;
 
     private WindowManager windowManager;
+    private ViewGroup overlayContainer;
     private TextView overlayView;
     private boolean overlayShown = false;
+
+    // Self-sustaining overlay tick: runs every 500ms inside the service, independent of
+    // MainActivity's lifecycle. Auto-reattaches the window if a display-mode change removes it.
+    private final Runnable overlayTick = new Runnable() {
+        @Override public void run() {
+            SleepTimer t = SleepTimer.get();
+            if (!t.isActive()) {
+                hideTimerOverlay();
+                return;
+            }
+            // Re-attach if the system removed our window (e.g. HDR mode switch).
+            if (overlayShown && overlayContainer != null && !overlayContainer.isAttachedToWindow()) {
+                Log.w(TAG, "overlay detached — re-attaching");
+                overlayContainer = null;
+                overlayView = null;
+                overlayShown = false;
+            }
+            if (!overlayShown) attachOverlayWindow();
+            if (overlayView != null) overlayView.setText(SleepTimer.formatMs(t.getRemainingMs()));
+            homeHandler.postDelayed(this, 500);
+        }
+    };
 
     /** Scancodes of remote buttons that should open Settings (config.xml, settings_key_scancodes). */
     private int[] settingsScancodes = new int[0];
@@ -73,7 +99,7 @@ public class HomeKeyService extends AccessibilityService {
         return false;
     }
 
-    // ---- Sleep timer integration (fully wired in Task 4) ----
+    // ---- Sleep timer integration ----
 
     /** Called by SleepTimer.Listener.onExpired() to put the TV to sleep. */
     public static void triggerSleep() {
@@ -84,67 +110,100 @@ public class HomeKeyService extends AccessibilityService {
         }
     }
 
-    /** Shows the countdown overlay on top of all apps via TYPE_ACCESSIBILITY_OVERLAY. */
+    /**
+     * Starts the self-sustaining overlay tick. Safe to call repeatedly — just restarts the tick.
+     * The tick runs inside the service and survives the launcher going to background.
+     */
     public void showTimerOverlay() {
-        if (overlayShown || windowManager == null) return;
-        homeHandler.post(() -> {
-            if (overlayShown) return;
-            TextView tv = new TextView(this);
-            tv.setTextColor(0xFFFFFFFF);
-            tv.setTextSize(TypedValue.COMPLEX_UNIT_SP, 32);
-            tv.setTypeface(Typeface.DEFAULT_BOLD);
-            tv.setBackgroundColor(0xCC000000);
-            tv.setPadding(28, 12, 28, 12);
-            tv.setGravity(Gravity.CENTER);
-            tv.setShadowLayer(4f, 0f, 1f, 0x80000000);
-
-            WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
-                    WindowManager.LayoutParams.WRAP_CONTENT,
-                    WindowManager.LayoutParams.WRAP_CONTENT,
-                    WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
-                            | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
-                            | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
-                    PixelFormat.TRANSLUCENT);
-            lp.gravity = Gravity.TOP | Gravity.START;
-            lp.x = 48;
-            lp.y = 48;
-
-            try {
-                windowManager.addView(tv, lp);
-                overlayView = tv;
-                overlayShown = true;
-                Log.d(TAG, "timer overlay shown");
-            } catch (Exception e) {
-                Log.w(TAG, "showTimerOverlay failed: " + e.getMessage());
-            }
-        });
+        homeHandler.removeCallbacks(overlayTick);
+        homeHandler.post(overlayTick);
     }
 
-    /** Updates the countdown text in the overlay; shows it if not yet visible. */
+    /**
+     * Called from MainActivity's SleepTimer.Listener for backward compatibility.
+     * The overlayTick already handles updates; this just ensures the tick is running.
+     */
     public void updateTimerOverlay(long remainingMs) {
-        if (!overlayShown) showTimerOverlay();
-        homeHandler.post(() -> {
-            if (overlayView != null) {
-                overlayView.setText(SleepTimer.formatMs(remainingMs));
-            }
-        });
+        if (!homeHandler.hasCallbacks(overlayTick)) {
+            homeHandler.post(overlayTick);
+        }
     }
 
-    /** Removes the countdown overlay. */
+    /** Stops the tick and removes the overlay window. */
     public void hideTimerOverlay() {
+        homeHandler.removeCallbacks(overlayTick);
         homeHandler.post(() -> {
-            if (!overlayShown || overlayView == null) return;
+            if (!overlayShown || overlayContainer == null) return;
             try {
-                windowManager.removeView(overlayView);
+                windowManager.removeView(overlayContainer);
                 Log.d(TAG, "timer overlay hidden");
             } catch (Exception e) {
                 Log.w(TAG, "hideTimerOverlay failed: " + e.getMessage());
             } finally {
+                overlayContainer = null;
                 overlayView = null;
                 overlayShown = false;
             }
         });
+    }
+
+    /** Builds and attaches the overlay window. Called only from overlayTick on the main thread. */
+    private void attachOverlayWindow() {
+        if (windowManager == null) return;
+
+        float dp = getResources().getDisplayMetrics().density;
+
+        // Rounded dark pill: "TV shutting off in" + large countdown
+        LinearLayout container = new LinearLayout(this);
+        container.setOrientation(LinearLayout.VERTICAL);
+        container.setGravity(Gravity.CENTER);
+        int hPad = (int) (dp * 40), vPad = (int) (dp * 20);
+        container.setPadding(hPad, vPad, hPad, vPad);
+
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(0xE6000000);  // 90% opaque black
+        bg.setCornerRadius(dp * 20);
+        container.setBackground(bg);
+
+        TextView label = new TextView(this);
+        label.setText("TV shutting off in");
+        label.setTextColor(0xFFFF9800);   // orange
+        label.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22);
+        label.setTypeface(Typeface.DEFAULT_BOLD);
+        label.setGravity(Gravity.CENTER);
+
+        TextView countdown = new TextView(this);
+        countdown.setTextColor(0xFFFFFFFF);
+        countdown.setTextSize(TypedValue.COMPLEX_UNIT_SP, 72);
+        countdown.setTypeface(Typeface.DEFAULT_BOLD);
+        countdown.setGravity(Gravity.CENTER);
+        countdown.setText("--:--");
+
+        container.addView(label, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        container.addView(countdown, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+
+        WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                        | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+                PixelFormat.TRANSLUCENT);
+        lp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        lp.y = (int) (dp * 60);  // 60dp from bottom edge
+
+        try {
+            windowManager.addView(container, lp);
+            overlayContainer = container;
+            overlayView = countdown;
+            overlayShown = true;
+            Log.d(TAG, "timer overlay attached");
+        } catch (Exception e) {
+            Log.w(TAG, "attachOverlayWindow failed: " + e.getMessage());
+        }
     }
 
     /** True when the overlay window is currently attached. */
