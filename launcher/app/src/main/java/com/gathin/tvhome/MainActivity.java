@@ -153,8 +153,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean moduleCards;
     /** Calmer motion for weak GPUs (config.xml, reduced_motion): stiff spring, short fades, no replay. */
     private boolean reducedMotion;
-    /** Whether to show the app description line below the focused tile name. */
-    private boolean showAppDescription;
+    /** Whether to show the wallpaper location/description info in the shelf. */
+    private boolean showWallpaperInfo;
     /** hidden_apps as the adapter sees them (config.xml or a theme's config.json): a hidden app gets no card either. */
     private Set<String> hiddenApps = Collections.emptySet();
     private List<Cards.Card> cards = Collections.emptyList();
@@ -442,7 +442,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         PrayerTimes.syncIfDue(this, this::updatePrayerTimes);
         vpnApp = cfg.vpnApp;
         moduleCards = cfg.moduleCards;
-        showAppDescription = cfg.showAppDescription;
+        showWallpaperInfo = cfg.showWallpaperInfo;
         hiddenApps = new HashSet<>(cfg.hiddenApps);
 
         grid = findViewById(R.id.grid);
@@ -1256,10 +1256,11 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private void showHero(int position, float dockTopInRoot) {
         // The place the picture is of, when there is one; the app's own name is the fallback for
-        // the user's own wallpapers, which carry no title.
-        final String label = placeName != null ? placeName : adapter.labelAt(position);
-        final String desc = placeName != null ? placeText : "";
-        final String where = placeName != null ? placeCountry : "";
+        // the user's own wallpapers, which carry no title. Suppress wallpaper info when toggled off.
+        final boolean usePlaceInfo = placeName != null && showWallpaperInfo;
+        final String label = usePlaceInfo ? placeName : adapter.labelAt(position);
+        final String desc = usePlaceInfo ? placeText : "";
+        final String where = usePlaceInfo ? placeCountry : "";
         int color = adapter.ambientColorAt(position);
         heroBottom = dockTopInRoot - HERO_GAP_DP * density;
         float y = heroBottom - heroShelf.getHeight();
@@ -1395,7 +1396,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             heroDesc.setLayoutParams(descLp);
         }
         heroDesc.setText(desc);
-        heroDesc.setVisibility((desc.isEmpty() || !showAppDescription) ? View.GONE : View.VISIBLE);
+        heroDesc.setVisibility(desc.isEmpty() ? View.GONE : View.VISIBLE);
     }
 
     /**

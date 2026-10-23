@@ -80,7 +80,7 @@ final class Config {
     final int soundVolume;
     /** Last-used sleep timer preset in minutes; 0 = off. */
     final int sleepTimerMinutes;
-    final boolean showAppDescription;
+    final boolean showWallpaperInfo;
     /** Whether the overlay file was present and parsed. */
     final boolean overlayApplied;
 
@@ -95,7 +95,7 @@ final class Config {
                    int cacheCleanDays,
                    String iconPack, boolean aerialWallpaper,
                    boolean soundNavEnabled, boolean soundSelectEnabled, int soundVolume,
-                   int sleepTimerMinutes, boolean showAppDescription,
+                   int sleepTimerMinutes, boolean showWallpaperInfo,
                    boolean overlayApplied) {
         this.dockApps = Collections.unmodifiableList(dockApps);
         this.hiddenApps = Collections.unmodifiableList(hiddenApps);
@@ -127,7 +127,7 @@ final class Config {
         this.soundSelectEnabled = soundSelectEnabled;
         this.soundVolume = soundVolume;
         this.sleepTimerMinutes = sleepTimerMinutes;
-        this.showAppDescription = showAppDescription;
+        this.showWallpaperInfo = showWallpaperInfo;
         this.overlayApplied = overlayApplied;
     }
 
@@ -222,14 +222,14 @@ final class Config {
         boolean soundSelectEnabled = json == null || bool(json, "sound_select_enabled", true);
         int soundVolume = json != null ? integer(json, "sound_volume", 80, 0, 100) : 80;
         int sleepTimerMinutes = json != null ? integer(json, "sleep_timer_minutes", 0, 0, 120) : 0;
-        boolean showAppDescription = json == null || bool(json, "show_app_description", true);
+        boolean showWallpaperInfo = json == null || bool(json, "show_wallpaper_info", true);
 
         return new Config(dock, hidden, liveTv, liveTvAction, panelService, panelAction, inputAction,
                 Math.max(1, columns), Math.max(0, rowsBelow), shamsi, moduleCards, reducedMotion,
                 vpn, homeSettings, networkPill, liveTvRow, background, wallpaper, wallpapers, wallpaperIntervalMs,
                 places, wallpaperOnline, wallpaperFeed, cacheCleanDays,
                 iconPack, aerialWallpaper, soundNavEnabled, soundSelectEnabled, soundVolume,
-                sleepTimerMinutes, showAppDescription, applied);
+                sleepTimerMinutes, showWallpaperInfo, applied);
     }
 
     /** Reads and parses the overlay; any problem means "no overlay", never a crash on the home screen. */

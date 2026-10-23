@@ -40,10 +40,10 @@ public class LauncherSettingsActivity extends Activity {
         // ── Icons ──────────────────────────────────────────────────────────
         addSection(content, "Icons");
         addIconPackPicker(content, cfg.iconPack);
-        addToggle(content, "Show App Description",
-                "Show the app summary line below the focused tile name",
-                cfg.showAppDescription,
-                v -> Config.save(cfgDir, "show_app_description", v));
+        addToggle(content, "Show Wallpaper Info",
+                "Show location and description when the wallpaper changes",
+                cfg.showWallpaperInfo,
+                v -> Config.save(cfgDir, "show_wallpaper_info", v));
 
         // ── Wallpaper ──────────────────────────────────────────────────────
         addSection(content, "Wallpaper");
