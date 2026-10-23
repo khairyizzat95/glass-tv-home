@@ -10,9 +10,11 @@ Glass TV Home is a modern, lightweight home launcher replacement for Android TV 
 
 * 🚀 **Zero Ads & Ultralight**: Only ~422 KB in size. Saves over 400 MB of RAM compared to sluggish stock manufacturer launchers.
 * 🪟 **Frosted Glass Aesthetic (tvOS Style)**: Modern Apple TV-inspired interface with fluid focus animations and a floating glass dock.
-* 🕌 **Islamic Prayer Timetable & Daily Ayat**: Accurate 6-phase prayer timetable (Subuh, Syuruk, Zohor, Asar, Maghrib, Isyak) with active prayer emerald highlighting and daily Quranic verses.
+* 🕌 **Islamic Prayer Timetable & Daily Ayat**: Accurate 6-phase prayer timetable (Subuh, Syuruk, Zohor, Asar, Maghrib, Isyak) with active prayer emerald highlighting and daily Quranic verses, shown on a dark frosted pill for readability against any wallpaper.
 * ⛅ **Weather & Air Quality (API / AQI) Dashboard**: Live ambient temperature, "feels like", humidity, UV index, wind speed, sunrise/sunset, 12-hour forecast, 7-day outlook, and official Air Quality Index readings (APIMS).
-* 🌙 **StandBy Screensaver & 2-Hour Auto Power-Off**: Enters ambient black nightstand screensaver after 10 minutes of inactivity (burn-in safe for OLED/LED), and automatically turns off the TV display after 2 hours of sleep standby to save electricity.
+* 🌙 **StandBy Screensaver & Sleep Timer**: Enters ambient black nightstand screensaver after 10 minutes of inactivity (burn-in safe for OLED/LED). A moon-icon **Sleep Timer pill** in the top bar lets you set a countdown (15, 30, 60, or 120 min) after which the TV display turns off automatically.
+* 🙈 **Hide Apps**: Long-press any app tile and choose **Hide App** to instantly remove it from the grid. Restore hidden apps anytime from **Launcher Settings → Hidden Apps**.
+* 🎨 **App Icon Customisation**: Long-press any tile to change its icon using an installed icon pack, a custom image from your device, or to reset it back to the original.
 
 ---
 
@@ -92,13 +94,14 @@ Glass TV Home is designed around standard TV remotes:
 
 | Remote Button | Action / Function |
 | :--- | :--- |
-| **DOUBLE-PRESS HOME** | • **Outside**: Opens Recent Apps & RAM Manager.<br>• **Inside Recent Apps**: Triggers **Close All** immediately to terminate all background apps & clear RAM! |
-| **HOME Button (Single Press)** | Return to home dock from any third-party app. If on home, engages ambient screensaver. |
-| **UP Button (▲)** | Navigates to the top shelf to highlight the **Weather & AQI Pill** or Wi-Fi/Settings menus. |
-| **OK / Center Button** | • Press on an app to launch it.<br>• Press on the weather pill to open the **Full-Screen Weather & Air Quality Dashboard**.<br>• **Long-Press** on an app to pick it up and rearrange/pin it to the dock. |
+| **DOUBLE-PRESS HOME** | Opens the system's native **Recent Apps** drawer (same as the recents key on supported remotes). |
+| **HOME Button (Single Press)** | Return to home dock from any third-party app. If already on home, engages the ambient screensaver. |
+| **RECENTS / APP SWITCH key** | Opens the system's native **Recent Apps** drawer directly. |
+| **UP Button (▲)** | Navigates to the top shelf to highlight the **Weather & AQI Pill**, Wi-Fi, Sleep Timer, or Settings buttons. |
+| **OK / Center Button** | • Press on an app to launch it.<br>• Press on the weather pill to open the **Full-Screen Weather & Air Quality Dashboard**.<br>• **Long-Press** on an app tile to open the app options menu (Move, Hide App, App Info, Change Icon, Upload Icon). |
 | **DOWN Button (▼)** | Returns focus down to the main application dock. |
-| **LEFT / RIGHT (◀ / ▶)** | Move smoothly between dock apps or top pills with fluid glass glow transitions. |
-| **BACK Button (↩)** | Closes the Weather Dashboard, Recent Apps, or screensaver and returns to the home dock. |
+| **LEFT / RIGHT (◀ / ▶)** | Move smoothly between dock apps or top pills. |
+| **BACK Button (↩)** | Closes the Weather Dashboard or screensaver and returns to the home dock. |
 
 ---
 
@@ -122,14 +125,24 @@ Glass TV Home is designed around standard TV remotes:
 * **2 Hours Later**: If left untouched, the TV display enters sleep standby (`GLOBAL_ACTION_LOCK_SCREEN`) to save power.
 * **Wake Up**: Press any button on the TV remote to wake the TV immediately.
 
-### D. Recent Apps & RAM Cleaner (Double-Press Home) ⚡
-A native tvOS-style app switcher and memory flusher:
-* **How to Open**: Press the remote **HOME button twice rapidly** from any app or home screen (or press the App Switch button on supported remotes).
-* **Double-Press Home to Close All**: While viewing the Recent Apps screen, press the **HOME button twice rapidly** again to immediately execute **Close All** and clean RAM without touching any other key!
-* **Genuine Force-Stop Automation**: Integrates background accessibility automation to cleanly terminate stubborn media players, video streams, and background tasks (such as Nuvio, YouTube, Stremio) from system memory, rather than merely dismissing their card visually.
-* **Live RAM Gauge Pill**: In the top right corner, view real-time memory stats (e.g., `RAM 1.8 GB used of 2.3 GB`) with a responsive recessed progress bar.
-* **Dismiss Individual Apps**: On any focused app card, press **UP (▲)** on your remote to terminate its process, animate the card away, and instantly free up RAM.
-* **'Close All' Button (Trash Icon 🗑️)**: Navigate to the far right of the carousel and click the circular **Close All** button to terminate all running background apps and flush RAM in 1 tap!
+### D. System Recent Apps (Double-Press Home)
+* **How to Open**: Press the remote **HOME button twice rapidly** from any app or screen, or press the dedicated **Recents / App Switch** button on supported remotes.
+* **What You See**: The standard Android TV recents drawer managed by the system — the same one you get on stock launchers. Switch between your open apps or dismiss them from here.
+* **Tip**: Pressing Back while in recents returns you straight to the Glass TV Home screen.
+
+### E. Hide Apps
+Keep your launcher clean by hiding apps you rarely use without uninstalling them:
+* **How to Hide**: On the home screen, **long-press** any app tile to open the options menu. Select **Hide App** — the app disappears from the grid instantly, with no restart needed.
+* **How to Restore**: Open **Launcher Settings** (top-right gear icon) and scroll to **Hidden Apps** at the bottom. You will see each hidden app listed by name. Tap or select **Unhide** next to any app to bring it back.
+* **Note**: Only apps actually installed on your device appear in the Hidden Apps list. Default entries for apps that are not installed are automatically filtered out.
+
+### F. App Icon Customisation
+Change any app's tile icon to your liking:
+* **How to Customise**: **Long-press** any app tile to open the options menu, then choose one of:
+  * **Change Icon** — select an icon from any installed icon pack (e.g., Arcticons, Lawnicons).
+  * **Upload Icon** — use any image stored on your device as a completely custom tile icon.
+  * **Reset Icon** — restore the app's original system icon.
+* **Icon Packs**: Install an icon pack from the Play Store, then go to **Launcher Settings → Icons → Icon Pack** to apply it globally across all tiles.
 
 ---
 
