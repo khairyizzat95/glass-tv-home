@@ -226,7 +226,9 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
                     + c.caption + '|' + c.accent);
         }
         Collections.sort(parts);
-        String signature = android.text.TextUtils.join(";", parts);
+        List<String> hiddenSorted = new ArrayList<>(hidden);
+        Collections.sort(hiddenSorted);
+        String signature = android.text.TextUtils.join(";", parts) + "|hidden:" + android.text.TextUtils.join(",", hiddenSorted);
         if (signature.equals(builtFrom) && !items.isEmpty()) return false;
         builtFrom = signature;
         Map<String, Cards.Card> cardByPkg = new HashMap<>();
