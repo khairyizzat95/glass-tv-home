@@ -936,8 +936,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 handler.removeCallbacks(singleHomeRunnable);
                 singleHomeRunnable = null;
             }
-            startActivity(new Intent(this, RecentAppsActivity.class));
-            return;
+            // double-Home: just let it fall through
         } else {
             lastHomePressTime = now;
             singleHomeRunnable = () -> {
@@ -1907,10 +1906,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             return true;
         }
         if (code == KeyEvent.KEYCODE_APP_SWITCH) {
-            if (event.getAction() == KeyEvent.ACTION_UP) {
-                startActivity(new Intent(this, RecentAppsActivity.class));
-            }
-            return true;
+            return false; // let the system handle recents
         }
         if (code == KeyEvent.KEYCODE_HOME || code == KeyEvent.KEYCODE_ALL_APPS) {
             if (event.getAction() == KeyEvent.ACTION_UP) {
@@ -1925,8 +1921,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                         handler.removeCallbacks(singleHomeRunnable);
                         singleHomeRunnable = null;
                     }
-                    startActivity(new Intent(this, RecentAppsActivity.class));
-                    return true;
+                    // double-Home: just let it fall through
                 } else {
                     lastHomePressTime = now;
                     singleHomeRunnable = () -> {
