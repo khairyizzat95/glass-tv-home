@@ -109,7 +109,7 @@
 
         <activity
             android:name=".LauncherSettingsActivity"
-            android:exported="false"
+            android:exported="true"
             android:excludeFromRecents="true"
             android:screenOrientation="landscape"
             android:theme="@style/Theme.TvHome" />

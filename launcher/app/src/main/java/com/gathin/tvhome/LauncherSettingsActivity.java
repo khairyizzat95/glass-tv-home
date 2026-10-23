@@ -114,7 +114,6 @@ public class LauncherSettingsActivity extends Activity {
     private void addTextSetting(LinearLayout parent, String title, String hint,
                                 String initial, Callback<String> onChange) {
         LinearLayout row = makeRow(parent, title, initial.isEmpty() ? hint : initial);
-        TextView preview = (TextView) row.getChildAt(0); // the label column
         row.setFocusable(true);
         row.setOnClickListener(v -> {
             EditText et = new EditText(this);
