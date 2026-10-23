@@ -124,13 +124,18 @@ public class LauncherSettingsActivity extends Activity {
     // ── Hidden apps manager ────────────────────────────────────────────────
 
     private void addHiddenAppsManager(LinearLayout parent, List<String> hiddenPkgs) {
+        PackageManager pm = getPackageManager();
+        // Only show apps that are actually installed on this device
+        hiddenPkgs.removeIf(pkg -> {
+            try { pm.getApplicationInfo(pkg, 0); return false; }
+            catch (PackageManager.NameNotFoundException e) { return true; }
+        });
         if (hiddenPkgs.isEmpty()) {
             LinearLayout row = makeRow(parent, "No hidden apps", "");
             row.setFocusable(false);
             row.setClickable(false);
             return;
         }
-        PackageManager pm = getPackageManager();
         for (String pkg : hiddenPkgs) {
             String label = pkg;
             try {
