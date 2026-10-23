@@ -1386,7 +1386,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         glassShown = false;
         // Up to the top menu it is dark at once, and travels that way.
         gliderOnPill = true;
-        glider.setStyle(Glider.DARK);
+        glider.setStyle(Glider.GLASS);
         glider.moveTo(l, t, l + pill.getWidth(), t + pill.getHeight(), pill.getHeight() / 2f);
     }
 
