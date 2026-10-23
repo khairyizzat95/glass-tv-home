@@ -418,9 +418,7 @@ public class HomeKeyService extends AccessibilityService {
         int keyCode = event.getKeyCode();
         if (keyCode == KeyEvent.KEYCODE_APP_SWITCH) {
             if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) {
-                Intent recent = new Intent(this, RecentAppsActivity.class)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                startActivity(recent);
+                performGlobalAction(GLOBAL_ACTION_RECENTS);
             }
             return true;
         }
@@ -429,42 +427,26 @@ public class HomeKeyService extends AccessibilityService {
         if (event.getAction() == KeyEvent.ACTION_UP && !event.isCanceled()) {
             long now = SystemClock.uptimeMillis();
             if (now - lastHomePressTime < DOUBLE_HOME_INTERVAL_MS) {
-                // Double press detected!
+                // Double press detected — show system recents
                 lastHomePressTime = 0;
                 if (singleHomeRunnable != null) {
                     homeHandler.removeCallbacks(singleHomeRunnable);
                     singleHomeRunnable = null;
                 }
-
-                if (RecentAppsActivity.isForeground()) {
-                    // Double press Home while in Recent Apps -> Close All!
-                    Log.i(TAG, "Double press Home in Recent Apps -> Trigger Close All");
-                    RecentAppsActivity.triggerCloseAllFromGlobal();
-                } else {
-                    // Double press Home on Home Screen -> Open Recent Apps!
-                    Log.i(TAG, "Double press Home on Home Screen -> Open Recent Apps");
-                    Intent recent = new Intent(this, RecentAppsActivity.class)
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                    startActivity(recent);
-                }
+                Log.i(TAG, "Double press Home -> system recents");
+                performGlobalAction(GLOBAL_ACTION_RECENTS);
                 return true;
             } else {
                 lastHomePressTime = now;
                 singleHomeRunnable = () -> {
                     singleHomeRunnable = null;
-                    if (RecentAppsActivity.isForeground()) {
-                        // Single Home in Recent Apps -> Dismiss and return to Home
-                        RecentAppsActivity.dismissFromGlobal();
-                    } else {
-                        // Single Home outside -> Go to Home
-                        Intent home = new Intent(Intent.ACTION_MAIN)
-                                .addCategory(Intent.CATEGORY_HOME)
-                                .setPackage(getPackageName())
-                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
-                        try {
-                            startActivity(home);
-                        } catch (Exception ignored) {}
-                    }
+                    Intent home = new Intent(Intent.ACTION_MAIN)
+                            .addCategory(Intent.CATEGORY_HOME)
+                            .setPackage(getPackageName())
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED);
+                    try {
+                        startActivity(home);
+                    } catch (Exception ignored) {}
                 };
                 homeHandler.postDelayed(singleHomeRunnable, DOUBLE_HOME_INTERVAL_MS);
                 return true;
