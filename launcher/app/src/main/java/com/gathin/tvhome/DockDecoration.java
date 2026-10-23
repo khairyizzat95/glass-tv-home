@@ -36,7 +36,7 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
         // Same glass as the top-bar pills (GlassDrawable): an even veil and a shining edge.
         // When a live video wallpaper is playing, the blurred-screenshot glass is replaced by a
         // plain 10% white fill so the video shows through cleanly.
-        band.setColor(videoWallpaper ? 0x4DFFFFFF : 0x12FFFFFF);
+        band.setColor(videoWallpaper ? 0x33FFFFFF : 0x12FFFFFF);
         trayShadowPaint.setColor(0x38000000);
         trayShadowPaint.setMaskFilter(new android.graphics.BlurMaskFilter(14f * density, android.graphics.BlurMaskFilter.Blur.NORMAL));
         edge = new GlassRim(1.5f * density, 0xD9FFFFFF, 0x1AFFFFFF, 0.5f);
