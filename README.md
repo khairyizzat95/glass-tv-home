@@ -26,51 +26,65 @@ every week.
 
 ## What you get
 
-- **Recent Apps & RAM Manager (Double-Press Home).** A native tvOS-style 3D CoverFlow app switcher and memory optimizer:
-  - **Double-Press Home Button**: Double-pressing the remote's Home button from anywhere on the TV brings up the frosted glass Recent Apps deck.
-  - **Double-Press Home to Close All**: Double-pressing Home again while inside the Recent Apps screen triggers `Close All` immediately—killing all background tasks and clearing memory in one step!
-  - **Genuine Force-Stop Automation**: Integrates Accessibility automated force-stop to cleanly and completely terminate even stubborn foreground media apps (e.g. video players, streaming apps) that resist standard background process termination.
-  - **Live RAM Gauge**: Real-time memory consumption display (`RAM 1.8 GB used of 2.3 GB`) with a sleek recessed progress bar.
-  - **Individual App Dismissal**: Press `▲ (Up)` on any app card to slide it away, force-stop its process, and immediately reclaim RAM.
-  - **Close All Button**: Click the circular `Close All` button (`🗑️`) at the end of the carousel to kill all running apps at once.
+- **System recents on double-press Home.** Double-pressing the Home button opens the system's native recents drawer — the same one the remote's recents key uses — via Android's Accessibility Service (`GLOBAL_ACTION_RECENTS`). No custom overlay, no RAM overhead.
+
 - **Weather & Air Quality Engine.** A full-screen Leanback weather hub (`WeatherActivity`) accessible directly from the under-clock pill:
   - Current condition, apparent temperature, humidity, wind velocity, UV index, sunrise and sunset times.
   - Air Quality Index (AQI / API / IPU) from Malaysia's Jabatan Alam Sekitar (APIMS) with a multi-color spectrum gauge, station comparisons, PM2.5 / PM10 readings, and health advisories.
   - Next 12 Hours hourly forecast pills and 7-day daily forecast cards with precipitation probabilities.
-- **Islamic Prayer Timetable & Daily Ayat.** A mindful cultural shelf:
+
+- **Islamic Prayer Timetable & Daily Ayat.** A mindful cultural shelf on a dark frosted pill so it stays readable against any wallpaper:
   - 6-phase timetable (Subuh, Syuruk, Zohor, Asar, Maghrib, Isyak) with emerald highlighting for the active prayer window.
   - Daily Quranic Ayat of the Day with Arabic calligraphy and translations.
+
 - **StandBy Ambient Mode & Smart Energy Lifecycle.**
   - **10 Minutes Idle**: Automatically engages an ambient StandBy screensaver with large 110sp numerals, Islamic Hijri calendar, next prayer capsule, and a late-night red monochrome wind-down mode.
-  - **2 Hours Later**: Automatically turns off the TV display into deep sleep standby via Android's Accessibility Service (`GLOBAL_ACTION_LOCK_SCREEN`).
+  - **Sleep timer pill**: A moon-icon button in the top bar cycles through preset durations; a countdown overlay appears on screen and the TV turns off when it expires via `GLOBAL_ACTION_LOCK_SCREEN`.
+
+- **Hide apps from your home screen.** Long-press any app tile and choose **Hide App** — it disappears from the grid instantly. Restore hidden apps from **Launcher Settings → Hidden Apps** at any time.
+
+- **Full app icon customisation.** Long-press any tile to:
+  - **Change Icon** — pick from any installed icon pack.
+  - **Upload Icon** — use any image from your device as a custom tile icon.
+  - **Reset Icon** — restore the app's original icon.
+
+- **Aerial video wallpaper with scene filtering.** Connects to AerialViews for curated aerial footage. When AerialViews isn't available the launcher falls back to its own bundled library of aerial clips. In **Launcher Settings → Wallpaper** you can filter by scene type (Beach, City, Countryside, Nature, Sea, Space, Waterfall) and the new filter applies instantly without waiting for a timeout.
 
 - **Keeps itself clean.** Every 15 days, while Home sits idle, the TV clears its app caches, where the Play
   Store leaves gigabytes of download leftovers that can make apps open to a blank screen. No computer needed,
   sign-ins and app data are never touched; the TV asks once to allow it.
+
 - **Glass, like Apple's.** The dock's tray, the top-bar buttons and the menus show the picture behind them
   softened, with a shine along their edges. Android 10 has no live blur, so the picture is blurred once each
-  time it changes and the glass draws its patch of it.
+  time it changes and the glass draws its patch of it. All top-right pills (Network, Sleep Timer, Settings)
+  share the same background, opacity, and focus indicator — a white rim outline visible on any wallpaper.
+
 - **One selection that glides.** Between apps it is a pane of glass with the app's shadow under it; on the top
-  bar and in the menus it is dark. It glides and changes shape from one to the next, never jumps.
+  bar and in the menus it travels as a white rim outline. It glides and changes shape from one to the next, never jumps.
+
 - **Places to visit that renew themselves.** Once a week the TV takes the pictures Bing has shown on its home
   page over the past days — landmarks, landscapes, wildlife — deletes last week's and rotates through them,
   dimmed so the clock and tiles stay readable. The shelf above the dock names each one, its country and a few
   lines about it. Pictures with people in them are skipped: by the words in their caption, and by Android's
   own face detector on the TV. No key, no account, nothing to set up.
-- **Every app tints the room.** The glow behind Home, and the glass with it, blends to the colour of whichever
-  app is selected.
-- **Arrange your apps from the remote.** Hold OK on an app for a glass menu with **Move** and **App info**.
+
+- **Arrange your apps from the remote.** Hold OK on an app for a glass menu with **Move**, **Hide App**, **App Info**, **Change Icon**, and **Upload Icon**.
   Move picks the app up: it wiggles, the arrows carry it (into or out of the dock too) and the other apps
   slide aside; OK puts it down. The order is kept, and apps installed later join at the end.
+
 - **An Inputs menu in glass.** The selection glides out of the Inputs button into the list of HDMI and AV
   inputs, and Up from the top of the list glides it back.
+
 - **Comes back as you left it.** Back from an app, the app you left is still selected; pressing Home on Home
   goes to the first app. When Android has closed Home to free memory, it comes back whole in one frame,
   with no black screen and no half-built dock.
+
 - **A clock screensaver.** A grey analog dial with a yellow-orange second hand that ticks, the time and
   date beneath, drifting a little each minute so nothing burns in.
+
 - **Rows feather out under the top bar** instead of being cut off when you scroll, and the Wi-Fi / Ethernet
   button can be hidden (`show_network_pill`).
+
 - **Rotating wallpapers of your own** instead, with `"places": false`: put pictures in a theme's `wallpapers/`
   folder and choose how often they change, down to every 5 seconds. Each picture is decoded in the background
   and cross-faded.
