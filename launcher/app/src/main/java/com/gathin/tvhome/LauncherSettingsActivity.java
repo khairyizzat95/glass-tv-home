@@ -74,13 +74,6 @@ public class LauncherSettingsActivity extends Activity {
                 cfg.soundVolume, 0, 100,
                 v -> Config.save(cfgDir, "sound_volume", v));
 
-        // ── Restart note ───────────────────────────────────────────────────
-        TextView note = new TextView(this);
-        note.setText("Changes take effect after the launcher restarts.");
-        note.setTextColor(0xFF808090);
-        note.setTextSize(13f);
-        note.setPadding(0, 32, 0, 0);
-        content.addView(note);
     }
 
     // ── Section header ─────────────────────────────────────────────────────

@@ -85,6 +85,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
 
     private static final int REQUEST_ICON_PICKER = 4821;
     private static final int REQUEST_IMAGE_PICK   = 4822;
+    private static final int REQUEST_SETTINGS     = 4823;
     /** Package name of the app whose icon is being replaced via the image picker. */
     private String pendingIconPkg;
     private IconPackLoader iconPackLoader;
@@ -584,8 +585,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         btnSettings.setOnClickListener(v ->
                 open(systemIntent(Settings.ACTION_SETTINGS)));
         btnSettings.setOnLongClickListener(v -> {
-            startActivity(new Intent(this, LauncherSettingsActivity.class)
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+            startActivityForResult(new Intent(this, LauncherSettingsActivity.class), REQUEST_SETTINGS);
             return true;
         });
 
@@ -1731,6 +1731,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_SETTINGS) {
+            recreate();
+            return;
+        }
         if (requestCode == REQUEST_ICON_PICKER && resultCode == RESULT_OK && data != null) {
             String pkg = data.getStringExtra(IconPickerActivity.EXTRA_PACKAGE);
             String iconPack = data.getStringExtra(IconPickerActivity.EXTRA_ICON_PACK);
