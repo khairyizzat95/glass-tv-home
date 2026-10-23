@@ -50,7 +50,7 @@ Sebelum AI boleh menyambung ke TV melalui Wi-Fi, aktifkan mod pembangun pada And
 Buka **Google Antigravity**, **Claude Code**, atau **Cursor** di laptop/komputer anda yang bersambung pada **rangkaian Wi-Fi yang sama dengan TV anda**. Salin dan hantarkan arahan di bawah kepada AI:
 
 ```text
-Tolong pasangkan Glass TV dari repo https://github.com/aqmangge/glass-tv-home pada Android TV saya.
+Tolong pasangkan Glass TV dari repo https://github.com/maohisham/glass-tv-home pada Android TV saya.
 Model TV saya: [Masukkan jenama & model TV anda, contoh: Xiaomi Mi Box S]
 Alamat IP TV: [Masukkan IP TV anda, contoh: 192.168.68.102]
 

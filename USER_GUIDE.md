@@ -51,7 +51,7 @@ Before AI can reach your TV over Wi-Fi, enable developer options on your Android
 Open **Google Antigravity**, **Claude Code**, or **Cursor** on your computer/laptop connected to the **same home Wi-Fi network as your TV**. Copy and paste the prompt below:
 
 ```text
-Please install Glass TV from repository https://github.com/aqmangge/glass-tv-home on my Android TV.
+Please install Glass TV from repository https://github.com/maohisham/glass-tv-home on my Android TV.
 My TV model: [Insert your TV brand & model, e.g., Xiaomi Mi Box S]
 My TV IP address: [Insert your TV IP, e.g., 192.168.68.102]
 
