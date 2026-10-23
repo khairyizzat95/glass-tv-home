@@ -196,6 +196,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean wallpaperFullscreen = false;
     private AerialWallpaperPlayer aerialPlayer;
     private boolean aerialActive = false;
+    private static final long AERIAL_BACKDROP_INTERVAL_MS = 5000L;
+    private final Runnable aerialBackdropTick = new Runnable() {
+        @Override public void run() {
+            if (aerialPlayer != null) {
+                android.graphics.Bitmap frame = aerialPlayer.getBitmap();
+                if (frame != null) blurBackdrop(frame);
+            }
+            if (aerialActive) handler.postDelayed(this, AERIAL_BACKDROP_INTERVAL_MS);
+        }
+    };
     private View mainContent;
     private static final long DOUBLE_BACK_DELAY_MS = 350L;
     private Runnable singleBackRunnable = null;
@@ -302,6 +312,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             aerialActive = true;
             aerialPlayer = new AerialWallpaperPlayer(this, root);
             aerialPlayer.start();
+            handler.postDelayed(aerialBackdropTick, AERIAL_BACKDROP_INTERVAL_MS);
         } else {
             if (placesMode) wallpapers = PlaceWallpapers.list(this);
             else if (cfg.wallpaperOnline && wallpapers.isEmpty()) wallpapers = OnlineWallpapers.list(this);
@@ -852,6 +863,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             if (aerialPlayer == null) {
                 aerialPlayer = new AerialWallpaperPlayer(this, root);
                 aerialPlayer.start();
+                handler.removeCallbacks(aerialBackdropTick);
+                handler.postDelayed(aerialBackdropTick, AERIAL_BACKDROP_INTERVAL_MS);
             }
             // Remove any static wallpaper that was showing
             handler.removeCallbacks(wallTick);
@@ -862,6 +875,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             }
         } else {
             // Stop aerial; restore static wallpaper from updated config
+            handler.removeCallbacks(aerialBackdropTick);
             if (aerialPlayer != null) { aerialPlayer.stop(); aerialPlayer = null; }
             wallpapers = liveCfg.wallpapers;
             wallpaperIntervalMs = liveCfg.wallpaperIntervalMs;
@@ -1081,6 +1095,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        handler.removeCallbacks(aerialBackdropTick);
         if (aerialPlayer != null) { aerialPlayer.stop(); aerialPlayer = null; }
         SoundEffects.release();
         wallDecoder.shutdownNow();

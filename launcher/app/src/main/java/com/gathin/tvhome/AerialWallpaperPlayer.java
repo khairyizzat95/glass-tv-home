@@ -181,6 +181,12 @@ final class AerialWallpaperPlayer implements TextureView.SurfaceTextureListener 
         }
     }
 
+    /** Returns a snapshot of the current video frame, or null if not ready. */
+    android.graphics.Bitmap getBitmap() {
+        if (textureView == null || !surfaceReady) return null;
+        try { return textureView.getBitmap(); } catch (Exception e) { return null; }
+    }
+
     void stop() {
         retryHandler.removeCallbacksAndMessages(null);
         releasePlayer();

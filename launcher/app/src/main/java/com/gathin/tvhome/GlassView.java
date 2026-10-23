@@ -8,14 +8,17 @@ import android.util.AttributeSet;
 import android.view.View;
 
 /**
- * The selection: a light rim around the focused tile, in the style of Apple's Liquid Glass, with
- * no fill, no brighter top and no outer glow, so the app underneath keeps its own brightness. One instance floats over the grid and is moved
+ * The selection highlight: a bright rim + subtle fill + outer white glow so the focused tile
+ * is unmistakably visible against any background. One instance floats over the grid and is moved
  * with spring animations between tiles.
  */
 public class GlassView extends View {
 
     private final GlassRim rim;
+    private final Paint glowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+    private final Paint fillPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final RectF rect = new RectF();
+    private final RectF glowRect = new RectF();
     private final float density;
     private float radius;
 
@@ -23,12 +26,20 @@ public class GlassView extends View {
         super(context, attrs);
         density = getResources().getDisplayMetrics().density;
         radius = 20f * density;
-        // The same shining edge as the top-bar pills (GlassDrawable), at the same width.
-        rim = new GlassRim(1.5f * density, 0xD9FFFFFF, 0x1AFFFFFF);
-        // Cache the slab as a texture. The spring only changes translation, so the GPU can
-        // move it without replaying clipPath and the glow on every frame. That path is
-        // software-rendered on the MT5895 and is what makes the highlight crawl.
-        setLayerType(LAYER_TYPE_HARDWARE, null);
+        rim = new GlassRim(2f * density, 0xFFFFFFFF, 0x66FFFFFF);
+
+        // Subtle white fill so the tile interior is lightly brightened when focused.
+        fillPaint.setStyle(Paint.Style.FILL);
+        fillPaint.setColor(0x22FFFFFF);
+
+        // Outer glow: draw a larger rounded rect with a soft white shadow.
+        glowPaint.setStyle(Paint.Style.STROKE);
+        glowPaint.setStrokeWidth(3f * density);
+        glowPaint.setColor(0xAAFFFFFF);
+        glowPaint.setShadowLayer(18f * density, 0f, 0f, 0xCCFFFFFF);
+
+        // Software layer needed for setShadowLayer to work on non-text draws.
+        setLayerType(LAYER_TYPE_SOFTWARE, null);
     }
 
     void setRadius(float px) {
@@ -38,11 +49,19 @@ public class GlassView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        // The slab keeps its old size: this inset once made room for an outer glow, and the tile
-        // positions and the spring are measured around it.
         float inset = 6f * density;
         rect.set(inset, inset, getWidth() - inset, getHeight() - inset);
-        // A rim only: the slab sits on top of the tile, so any fill would wash the app out.
+
+        // Outer glow (slightly expanded rect so the shadow blooms outside the tile boundary).
+        float glowInset = 2f * density;
+        glowRect.set(inset - glowInset, inset - glowInset,
+                getWidth() - inset + glowInset, getHeight() - inset + glowInset);
+        canvas.drawRoundRect(glowRect, radius + glowInset, radius + glowInset, glowPaint);
+
+        // Subtle fill.
+        canvas.drawRoundRect(rect, radius, radius, fillPaint);
+
+        // Bright rim.
         rim.fit(rect);
         canvas.drawRoundRect(rect, radius, radius, rim.paint);
     }
