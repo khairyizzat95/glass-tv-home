@@ -83,6 +83,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private String sourcePanelService;
     private String sourcePanelAction;
 
+    private static final int REQUEST_ICON_PICKER = 4821;
+    private IconPackLoader iconPackLoader;
     private AppAdapter adapter;
     private RecyclerView grid;
     private FrameLayout root;
@@ -506,8 +508,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         adapter = new AppAdapter(this, this, COLUMNS, cfg);
         grid.setAdapter(adapter);
         if (!cfg.iconPack.isEmpty()) {
-            adapter.setIconPackLoader(new IconPackLoader(getPackageManager(), cfg.iconPack));
+            iconPackLoader = new IconPackLoader(getPackageManager(), cfg.iconPack);
+            adapter.setIconPackLoader(iconPackLoader);
         }
+        adapter.setCustomIcons(CustomIconStore.load(Config.dir(this)));
 
         // tvOS layout: push the dock row towards the bottom of the screen, leaving room for
         // rows_below_dock grid rows under it; the rest of the grid stays below until you press Down.
@@ -1674,6 +1678,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         addInputRow(rows, () -> closeMenu(false), R.drawable.ic_info, getString(R.string.tile_app_info), -1,
                 () -> adapter.openAppInfo(adapter.positionOf(key)));
+        if (iconPackLoader != null && iconPackLoader.isActive()) {
+            addInputRow(rows, () -> closeMenu(false), R.drawable.ic_settings,
+                    "Change Icon", -1, () -> {
+                        Intent intent = new Intent(this, IconPickerActivity.class);
+                        intent.putExtra(IconPickerActivity.EXTRA_PACKAGE,
+                                key.contains("/") ? key.split("/")[0] : key);
+                        startActivityForResult(intent, REQUEST_ICON_PICKER);
+                    });
+        }
         panel.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         int width = Math.max((int) (190 * density), panel.getMeasuredWidth());
         // Under the app when there is room; over it in the dock, which sits near the bottom.
@@ -1683,6 +1696,21 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         int below = menuAt[1] - menuGliderAt[1] + card.getHeight() + (int) (18 * density) + panel.getMeasuredHeight();
         showMenu(panel, rows, card, width, below > root.getHeight() - (int) (24 * density));
         return true;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_ICON_PICKER && resultCode == RESULT_OK && data != null) {
+            String pkg = data.getStringExtra(IconPickerActivity.EXTRA_PACKAGE);
+            String drawable = data.getStringExtra(IconPickerActivity.EXTRA_DRAWABLE);
+            if (pkg != null && drawable != null) {
+                File cfgDir = Config.dir(this);
+                new Thread(() -> CustomIconStore.save(cfgDir, pkg, drawable)).start();
+                adapter.setCustomIcons(CustomIconStore.load(cfgDir));
+                reloadApps(false);
+            }
+        }
     }
 
     /** Picks the app up: it wiggles, the arrows carry it, and OK or Back puts it down. */

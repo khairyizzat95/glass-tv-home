@@ -131,6 +131,8 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
     private final List<String> arranged = new ArrayList<>();
     /** Optional icon pack; null means system icons. Updated via {@link #setIconPackLoader}. */
     private IconPackLoader iconPackLoader;
+    /** Custom icon overrides: packageName → drawableName in the icon pack. */
+    private Map<String, String> customIcons;
     private static final String ORDER_PREFS = "tiles", ORDER_KEY = "order";
     /** Rebind payload: only whether the tile's name shows, which depends on being in the dock. */
     private static final Object DOCK_CHANGED = new Object();
@@ -153,6 +155,12 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
     /** Updates the active icon pack; clears the tile cache so icons reload on the next rebuild. */
     void setIconPackLoader(IconPackLoader loader) {
         this.iconPackLoader = loader;
+        builtApps.clear();
+        builtFrom = null;
+    }
+
+    void setCustomIcons(Map<String, String> icons) {
+        this.customIcons = icons;
         builtApps.clear();
         builtFrom = null;
     }
@@ -229,10 +237,14 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
                 continue;
             }
             Drawable banner = loadBanner(pm, ri);
-            // The icon only shows on a tile without a banner; try icon pack first.
+            // The icon only shows on a tile without a banner; custom override, then pack, then system.
             Drawable icon = null;
             if (banner == null) {
-                icon = (iconPackLoader != null) ? iconPackLoader.getIcon(pkg) : null;
+                String customDrawable = (customIcons != null) ? customIcons.get(pkg) : null;
+                if (customDrawable != null && iconPackLoader != null) {
+                    icon = iconPackLoader.getIconByName(customDrawable);
+                }
+                if (icon == null) icon = (iconPackLoader != null) ? iconPackLoader.getIcon(pkg) : null;
                 if (icon == null) icon = ri.loadIcon(pm);
             }
             if (card != null) {

@@ -6,8 +6,13 @@ import android.graphics.drawable.Drawable;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Resolves app icons from an ADW/Nova-format icon pack installed on this device.
@@ -64,5 +69,42 @@ final class IconPackLoader {
 
     boolean isActive() {
         return packRes != null;
+    }
+
+    public static class IconEntry {
+        public final String drawableName;
+        IconEntry(String drawableName) { this.drawableName = drawableName; }
+    }
+
+    public List<IconEntry> getAllIcons() {
+        List<IconEntry> result = new ArrayList<>();
+        if (packRes == null) return result;
+        Set<String> seen = new LinkedHashSet<>();
+        for (String assetName : new String[]{"appfilter.xml", "drawable.xml"}) {
+            try (InputStream is = packRes.getAssets().open(assetName)) {
+                org.xmlpull.v1.XmlPullParser parser = android.util.Xml.newPullParser();
+                parser.setInput(is, "UTF-8");
+                int event;
+                while ((event = parser.next()) != org.xmlpull.v1.XmlPullParser.END_DOCUMENT) {
+                    if (event == org.xmlpull.v1.XmlPullParser.START_TAG && "item".equals(parser.getName())) {
+                        String d = parser.getAttributeValue(null, "drawable");
+                        if (d != null && !d.isEmpty()) seen.add(d);
+                    }
+                }
+            } catch (Exception ignored) {}
+        }
+        for (String name : seen) result.add(new IconEntry(name));
+        return result;
+    }
+
+    public Drawable getIconByName(String drawableName) {
+        if (packRes == null || drawableName == null) return null;
+        try {
+            int id = packRes.getIdentifier(drawableName, "drawable", packPkg);
+            if (id == 0) return null;
+            return packRes.getDrawableForDensity(id, DisplayMetrics.DENSITY_XHIGH, null);
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
