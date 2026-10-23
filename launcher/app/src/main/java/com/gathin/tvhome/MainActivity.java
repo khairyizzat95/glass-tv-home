@@ -1725,6 +1725,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                         new Thread(() -> CustomIconStore.save(cfgDir, iconPkg, null)).start();
                     });
         }
+        addInputRow(rows, () -> closeMenu(false), R.drawable.ic_eye_off,
+                "Hide App", -1, () -> {
+                    File cfgDir = Config.dir(this);
+                    hiddenApps = new HashSet<>(hiddenApps);
+                    hiddenApps.add(iconPkg);
+                    org.json.JSONArray arr = new org.json.JSONArray();
+                    for (String pkg : hiddenApps) arr.put(pkg);
+                    Config.save(cfgDir, "hidden_apps", arr);
+                    reloadApps(false);
+                });
         panel.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED);
         int width = Math.max((int) (190 * density), panel.getMeasuredWidth());
         // Under the app when there is room; over it in the dock, which sits near the bottom.

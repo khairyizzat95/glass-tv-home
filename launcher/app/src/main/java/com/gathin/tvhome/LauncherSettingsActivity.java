@@ -3,6 +3,8 @@ package com.gathin.tvhome;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -65,6 +67,10 @@ public class LauncherSettingsActivity extends Activity {
                 cfg.sleepTimerMinutes,
                 v -> Config.save(cfgDir, "sleep_timer_minutes", v));
 
+        // ── Hidden Apps ────────────────────────────────────────────────────
+        addSection(content, "Hidden Apps");
+        addHiddenAppsManager(content, new ArrayList<>(cfg.hiddenApps));
+
         // ── Sound ──────────────────────────────────────────────────────────
         addSection(content, "Sound");
         addToggle(content, "Navigation Sound",
@@ -113,6 +119,46 @@ public class LauncherSettingsActivity extends Activity {
                     .setNegativeButton("Cancel", null)
                     .show();
         });
+    }
+
+    // ── Hidden apps manager ────────────────────────────────────────────────
+
+    private void addHiddenAppsManager(LinearLayout parent, List<String> hiddenPkgs) {
+        if (hiddenPkgs.isEmpty()) {
+            LinearLayout row = makeRow(parent, "No hidden apps", "");
+            row.setFocusable(false);
+            row.setClickable(false);
+            return;
+        }
+        PackageManager pm = getPackageManager();
+        for (String pkg : hiddenPkgs) {
+            String label = pkg;
+            try {
+                ApplicationInfo ai = pm.getApplicationInfo(pkg, 0);
+                label = pm.getApplicationLabel(ai).toString();
+            } catch (PackageManager.NameNotFoundException ignored) {}
+            final String pkgFinal = pkg;
+            final String labelFinal = label;
+            LinearLayout row = makeRow(parent, labelFinal, pkg);
+            TextView unhideBtn = new TextView(this);
+            unhideBtn.setText("Unhide");
+            unhideBtn.setTextColor(0xFF6E6EBF);
+            unhideBtn.setTextSize(14f);
+            unhideBtn.setPadding(24, 0, 0, 0);
+            row.addView(unhideBtn);
+            row.setOnClickListener(v -> {
+                hiddenPkgs.remove(pkgFinal);
+                JSONArray arr = new JSONArray();
+                for (String p : hiddenPkgs) arr.put(p);
+                Config.save(cfgDir, "hidden_apps", arr);
+                parent.removeView(row);
+                if (hiddenPkgs.isEmpty()) {
+                    LinearLayout empty = makeRow(parent, "No hidden apps", "");
+                    empty.setFocusable(false);
+                    empty.setClickable(false);
+                }
+            });
+        }
     }
 
     // ── Section header ─────────────────────────────────────────────────────
