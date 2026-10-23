@@ -195,6 +195,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private View screensaverView;
     private boolean wallpaperFullscreen = false;
     private AerialWallpaperPlayer aerialPlayer;
+    private boolean aerialActive = false;
     private View mainContent;
     private static final long DOUBLE_BACK_DELAY_MS = 350L;
     private Runnable singleBackRunnable = null;
@@ -298,6 +299,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         // Places only, when they are on: never the theme's own pictures, even before the first
         // week's places have arrived.
         if (cfg.aerialWallpaper) {
+            aerialActive = true;
             aerialPlayer = new AerialWallpaperPlayer(this, root);
             aerialPlayer.start();
         } else {
@@ -839,6 +841,39 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     };
 
     /** Whenever Home comes back: picks the rotation up where the interval left it. */
+    /** Called on every resume: starts/stops AerialWallpaperPlayer if the setting was toggled. */
+    private void syncAerialWallpaper() {
+        Config liveCfg = Config.load(this);
+        boolean want = liveCfg.aerialWallpaper;
+        if (want == aerialActive) return;
+        aerialActive = want;
+        if (want) {
+            // Start aerial video wallpaper
+            if (aerialPlayer == null) {
+                aerialPlayer = new AerialWallpaperPlayer(this, root);
+                aerialPlayer.start();
+            }
+            // Remove any static wallpaper that was showing
+            handler.removeCallbacks(wallTick);
+            if (wallView != null) {
+                root.removeView(wallView);
+                wallView = null;
+                wallBitmap = null;
+            }
+        } else {
+            // Stop aerial; restore static wallpaper from updated config
+            if (aerialPlayer != null) { aerialPlayer.stop(); aerialPlayer = null; }
+            wallpapers = liveCfg.wallpapers;
+            wallpaperIntervalMs = liveCfg.wallpaperIntervalMs;
+            placesMode = liveCfg.places;
+            if (placesMode) wallpapers = PlaceWallpapers.list(this);
+            else if (liveCfg.wallpaperOnline && wallpapers.isEmpty()) wallpapers = OnlineWallpapers.list(this);
+            if (!wallpapers.isEmpty()) showNextWallpaper(false);
+            else if (liveCfg.wallpaper != null && !placesMode) setWallpaper(decodeWallpaper(liveCfg.wallpaper), false);
+            config = liveCfg;
+        }
+    }
+
     private void startWallpaperRotation() {
         refreshPlacesIfDue();
         refreshOnlineWallpapersIfDue();
@@ -930,6 +965,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         WeatherAirQuality.syncIfDue(this, this::updateWeatherAqi);
         updateIslamicShelf();
         updateInputsButton();
+        syncAerialWallpaper();
         startWallpaperRotation();
         handler.postDelayed(minuteTick, MINUTE_MS);
         handler.removeCallbacks(cacheClean);

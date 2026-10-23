@@ -17,6 +17,13 @@ import tv.projectivy.plugin.wallpaperprovider.api.Event;
 import tv.projectivy.plugin.wallpaperprovider.api.IWallpaperProviderService;
 import tv.projectivy.plugin.wallpaperprovider.api.Wallpaper;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 final class AerialWallpaperPlayer implements TextureView.SurfaceTextureListener {
@@ -35,29 +42,123 @@ final class AerialWallpaperPlayer implements TextureView.SurfaceTextureListener 
     private int wallpaperIndex = 0;
     private boolean surfaceReady = false;
     private boolean bound = false;
+    private int retryCount = 0;
+    private static final int MAX_RETRIES = 5;
+    private final android.os.Handler retryHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private int consecutiveErrors = 0;
+
 
     private final ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder binder) {
             Log.i(TAG, "AerialViews service connected");
             providerService = IWallpaperProviderService.Stub.asInterface(binder);
-            try {
-                wallpapers = providerService.getWallpapers();
-                Log.d(TAG, "got " + (wallpapers != null ? wallpapers.size() : 0) + " wallpapers");
-                if (wallpapers != null && !wallpapers.isEmpty() && surfaceReady) {
-                    playNext();
-                }
-            } catch (RemoteException e) {
-                Log.w(TAG, "getWallpapers failed: " + e.getMessage());
-            }
+            fetchWallpapers();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
             Log.w(TAG, "AerialViews service disconnected");
             providerService = null;
+            retryHandler.removeCallbacksAndMessages(null);
         }
     };
+
+    private void fetchWallpapers() {
+        if (providerService == null) return;
+        try {
+            List<Wallpaper> result = providerService.getWallpapers();
+            int count = result != null ? result.size() : 0;
+            Log.d(TAG, "got " + count + " wallpapers (attempt " + (retryCount + 1) + ")");
+            if (count > 0) {
+                wallpapers = result;
+                retryCount = 0;
+                if (surfaceReady) playNext();
+            } else if (retryCount < MAX_RETRIES) {
+                retryCount++;
+                long delayMs = retryCount * 2000L; // 2s, 4s, 6s, 8s, 10s
+                Log.d(TAG, "retrying in " + delayMs + "ms");
+                retryHandler.postDelayed(this::fetchWallpapers, delayMs);
+            } else {
+                Log.w(TAG, "gave up after " + MAX_RETRIES + " retries — falling back to Apple CDN");
+                fetchAppleAerials();
+            }
+        } catch (RemoteException e) {
+            Log.w(TAG, "getWallpapers failed: " + e.getMessage());
+            fetchAppleAerials();
+        }
+    }
+
+    private void fetchAppleAerials() {
+        new Thread(() -> {
+            // Community sources use GitHub CDN (standard CA) — prepend them so they play first.
+            // Apple CDN (sylvan.apple.com) is appended as fallback; it may fail on devices
+            // with incomplete trust stores.
+            int[] githubIds = { R.raw.comm1, R.raw.comm2 };
+            int[] appleIds  = { R.raw.tvos26 };
+            List<String> githubUrls = new ArrayList<>();
+            List<String> appleUrls  = new ArrayList<>();
+            for (int rawId : githubIds) {
+                try {
+                    java.io.InputStream is = ctx.getResources().openRawResource(rawId);
+                    StringBuilder sb = new StringBuilder();
+                    try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
+                        String line;
+                        while ((line = br.readLine()) != null) sb.append(line);
+                    }
+                    JSONArray assets = new JSONObject(sb.toString()).optJSONArray("assets");
+                    if (assets == null) continue;
+                    for (int i = 0; i < assets.length(); i++) {
+                        JSONObject a = assets.getJSONObject(i);
+                        String url = a.optString("url-1080-H264", null);
+                        if (url == null || url.isEmpty()) url = a.optString("url-1080-SDR", null);
+                        if (url == null || url.isEmpty()) url = a.optString("url", null);
+                        if (url != null && !url.isEmpty()) githubUrls.add(url);
+                    }
+                } catch (Exception e) {
+                    Log.w(TAG, "fetchAppleAerials community resource failed: " + e.getMessage());
+                }
+            }
+            for (int rawId : appleIds) {
+                try {
+                    java.io.InputStream is = ctx.getResources().openRawResource(rawId);
+                    StringBuilder sb = new StringBuilder();
+                    try (BufferedReader br = new BufferedReader(new InputStreamReader(is))) {
+                        String line;
+                        while ((line = br.readLine()) != null) sb.append(line);
+                    }
+                    JSONArray assets = new JSONObject(sb.toString()).optJSONArray("assets");
+                    if (assets == null) continue;
+                    for (int i = 0; i < assets.length(); i++) {
+                        JSONObject a = assets.getJSONObject(i);
+                        String url = a.optString("url-1080-H264", null);
+                        if (url == null || url.isEmpty()) url = a.optString("url-1080-SDR", null);
+                        if (url == null || url.isEmpty()) url = a.optString("url", null);
+                        if (url != null && !url.isEmpty()) appleUrls.add(url);
+                    }
+                } catch (Exception e) {
+                    Log.w(TAG, "fetchAppleAerials apple resource failed: " + e.getMessage());
+                }
+            }
+            Collections.shuffle(githubUrls);
+            Collections.shuffle(appleUrls);
+            List<String> videoUrls = new ArrayList<>(githubUrls);
+            videoUrls.addAll(appleUrls);
+            Log.i(TAG, "Bundled aerial: " + githubUrls.size() + " GitHub + " + appleUrls.size() + " Apple videos");
+            List<Wallpaper> aerialWallpapers = new ArrayList<>();
+            for (String url : videoUrls) {
+                Wallpaper w = new Wallpaper();
+                w.uri = url;
+                w.mediaType = Wallpaper.MEDIA_TYPE_VIDEO;
+                aerialWallpapers.add(w);
+            }
+            retryHandler.post(() -> {
+                wallpapers = aerialWallpapers;
+                Log.i(TAG, "Bundled aerial: loaded " + wallpapers.size() + " videos — starting playback");
+                if (surfaceReady) playNext();
+            });
+        }).start();
+    }
 
     AerialWallpaperPlayer(Context ctx, ViewGroup container) {
         this.ctx = ctx.getApplicationContext();
@@ -81,6 +182,7 @@ final class AerialWallpaperPlayer implements TextureView.SurfaceTextureListener 
     }
 
     void stop() {
+        retryHandler.removeCallbacksAndMessages(null);
         releasePlayer();
         if (bound) {
             try { ctx.unbindService(connection); } catch (Exception ignored) {}
@@ -114,11 +216,17 @@ final class AerialWallpaperPlayer implements TextureView.SurfaceTextureListener 
             mediaPlayer.setSurface(new Surface(textureView.getSurfaceTexture()));
             mediaPlayer.setLooping(false);
             mediaPlayer.setVolume(0f, 0f);
-            mediaPlayer.setOnPreparedListener(MediaPlayer::start);
-            mediaPlayer.setOnCompletionListener(mp -> playNext());
+            mediaPlayer.setOnPreparedListener(mp -> { consecutiveErrors = 0; mp.start(); });
+            mediaPlayer.setOnCompletionListener(mp -> { consecutiveErrors = 0; playNext(); });
             mediaPlayer.setOnErrorListener((mp, what, extra) -> {
-                Log.w(TAG, "MediaPlayer error what=" + what + " extra=" + extra);
-                playNext();
+                consecutiveErrors++;
+                Log.w(TAG, "MediaPlayer error what=" + what + " extra=" + extra
+                        + " (consec=" + consecutiveErrors + ")");
+                if (wallpapers != null && consecutiveErrors < wallpapers.size()) {
+                    playNext();
+                } else {
+                    Log.w(TAG, "All aerial videos failed — giving up");
+                }
                 return true;
             });
             mediaPlayer.prepareAsync();

@@ -3,18 +3,20 @@ package com.gathin.tvhome;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.content.pm.ResolveInfo;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LauncherSettingsActivity extends Activity {
 
@@ -37,10 +39,7 @@ public class LauncherSettingsActivity extends Activity {
 
         // ── Icons ──────────────────────────────────────────────────────────
         addSection(content, "Icons");
-        addTextSetting(content, "Icon Pack",
-                "Package name (empty = system icons)",
-                cfg.iconPack,
-                v -> Config.save(cfgDir, "icon_pack", v));
+        addIconPackPicker(content, cfg.iconPack);
 
         // ── Wallpaper ──────────────────────────────────────────────────────
         addSection(content, "Wallpaper");
@@ -109,27 +108,38 @@ public class LauncherSettingsActivity extends Activity {
         row.setOnClickListener(v -> sw.setChecked(!sw.isChecked()));
     }
 
-    // ── Text-input setting ─────────────────────────────────────────────────
+    // ── Icon pack picker ───────────────────────────────────────────────────
 
-    private void addTextSetting(LinearLayout parent, String title, String hint,
-                                String initial, Callback<String> onChange) {
-        LinearLayout row = makeRow(parent, title, initial.isEmpty() ? hint : initial);
-        row.setFocusable(true);
-        row.setOnClickListener(v -> {
-            EditText et = new EditText(this);
-            et.setText(initial);
-            et.setHint(hint);
-            new AlertDialog.Builder(this)
-                    .setTitle(title)
-                    .setView(et)
-                    .setPositiveButton("Save", (d, w) -> {
-                        String val = et.getText().toString().trim();
-                        onChange.accept(val);
-                        updateSubtitle(row, val.isEmpty() ? hint : val);
-                    })
-                    .setNegativeButton("Cancel", null)
-                    .show();
-        });
+    private void addIconPackPicker(LinearLayout parent, String currentPack) {
+        List<ResolveInfo> resolved = getPackageManager()
+                .queryIntentActivities(new Intent("org.adw.launcher.THEMES"), 0);
+
+        List<String> names = new ArrayList<>();
+        List<String> packages = new ArrayList<>();
+        names.add("None (system icons)");
+        packages.add("");
+        for (ResolveInfo ri : resolved) {
+            names.add(ri.loadLabel(getPackageManager()).toString());
+            packages.add(ri.activityInfo.packageName);
+        }
+
+        int currentIdx = packages.indexOf(currentPack);
+        if (currentIdx < 0) currentIdx = 0;
+        final int[] sel = {currentIdx};
+        String subtitle = names.get(currentIdx);
+        LinearLayout row = makeRow(parent, "Icon Pack", subtitle);
+
+        final String[] namesArr = names.toArray(new String[0]);
+        row.setOnClickListener(v -> new AlertDialog.Builder(this)
+                .setTitle("Select Icon Pack")
+                .setSingleChoiceItems(namesArr, sel[0], (d, which) -> sel[0] = which)
+                .setPositiveButton("OK", (d, w) -> {
+                    String pkg = packages.get(sel[0]);
+                    Config.save(cfgDir, "icon_pack", pkg);
+                    updateSubtitle(row, namesArr[sel[0]]);
+                })
+                .setNegativeButton("Cancel", null)
+                .show());
     }
 
     // ── List-choice setting ────────────────────────────────────────────────
