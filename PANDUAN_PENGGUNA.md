@@ -9,9 +9,11 @@ Selamat datang ke **Glass TV Home**! Panduan ini khas untuk pengguna baru (*begi
 Glass TV Home ialah pengganti skrin utama (*launcher*) untuk Android TV dan Google TV (seperti Xiaomi Mi Box S, Mi TV Stick, Android TV Sharp, Sony, TCL, Philips, Mecool dsb):
 * 🚀 **Tiada Iklan & Sangat Ringan**: Hanya bersaiz ~422 KB, lancar dan tidak membebankan TV (menjimatkan lebih 400 MB RAM berbanding skrin asal).
 * 🪟 **Gaya Kaca Frosted (tvOS)**: Rekaan moden seperti Apple TV dengan bayang kaca terapung dan susunan aplikasi yang kemas.
-* 🕌 **Waktu Solat & Ayat Harian**: Jadual 6 waktu solat Malaysia secara automatik dengan ayat al-Quran pilihan harian.
+* 🕌 **Waktu Solat & Ayat Harian**: Jadual 6 waktu solat Malaysia secara automatik dengan ayat al-Quran pilihan harian, dipaparkan di atas kapsul gelap *frosted* agar mudah dibaca pada mana-mana latar belakang.
 * ⛅ **Dashboard Cuaca & Jerebu (API)**: Semakan suhu semasa, ramalan 12 jam, 7 hari, serta indeks pencemaran udara rasmi (APIMS Jabatan Alam Sekitar).
-* 🌙 **Screensaver Pintar & Jimat Elektrik**: Masuk screensaver selepas 10 minit rehat, dan TV padam automatik (*sleep standby*) selepas 2 jam.
+* 🌙 **Screensaver Pintar & Pemasa Tidur**: Masuk screensaver selepas 10 minit rehat. Kapsul **Pemasa Tidur (🌙)** di bar atas membolehkan anda tetapkan kiraan undur (15, 30, 60, atau 120 minit) sebelum TV padam automatik.
+* 🙈 **Sembunyikan Aplikasi**: Tekan lama mana-mana ikon aplikasi dan pilih **Sembunyikan** — ikon terus hilang dari grid seketika. Pulihkan semula dari **Tetapan Launcher → Aplikasi Tersembunyi** bila-bila masa.
+* 🎨 **Ubah Suai Ikon Aplikasi**: Tekan lama mana-mana ikon untuk menukar gambar menggunakan pek ikon yang dipasang, gambar sendiri dari peranti, atau kembali ke ikon asal.
 
 ---
 
@@ -92,10 +94,11 @@ Sangat mudah dan intuitif! Anda hanya perlukan butang arah pada remote TV anda:
 
 | Butang Remote | Tindakan / Fungsi |
 | :--- | :--- |
-| **Tekan Dua Kali HOME (Double-Press)** | • **Di Luar**: Buka Pengurus Recent Apps & RAM Cleaner.<br>• **Di Dalam Recent Apps**: Terus jalankan **Close All** untuk tutup semua aplikasi & cuci RAM serta-merta! |
+| **Tekan Dua Kali HOME (Double-Press)** | Buka laci **Recent Apps** sistem Android TV (sama seperti menekan butang Recents pada remote yang menyokongnya). |
 | **Butang HOME (Sekali Tekan)** | Kembali ke skrin utama dari mana-mana aplikasi. Jika di skrin utama, buka screensaver StandBy. |
-| **Butang ATAS (▲)** | Naik ke atas untuk pilih **Kapsul Cuaca & Jerebu** atau menu Wi-Fi / Tetapan. |
-| **Butang TENGAH (OK)** | • Tekan pada aplikasi untuk buka aplikasi tersebut.<br>• Tekan pada kapsul cuaca untuk buka **Dashboard Cuaca & Kualiti Udara penuh**.<br>• **Tekan & Tahan (Long-press)** pada aplikasi untuk susun atau pindahkan ikon ke dalam/luar dock. |
+| **Butang RECENTS / APP SWITCH** | Buka laci **Recent Apps** sistem Android TV secara terus. |
+| **Butang ATAS (▲)** | Naik ke atas untuk pilih **Kapsul Cuaca & Jerebu**, Wi-Fi, Pemasa Tidur, atau butang Tetapan. |
+| **Butang TENGAH (OK)** | • Tekan pada aplikasi untuk buka aplikasi tersebut.<br>• Tekan pada kapsul cuaca untuk buka **Dashboard Cuaca & Kualiti Udara penuh**.<br>• **Tekan & Tahan (Long-press)** pada ikon aplikasi untuk buka menu pilihan (Pindah, Sembunyikan, Maklumat App, Tukar Ikon, Muat Naik Ikon). |
 | **Butang BAWAH (▼)** | Turun semula ke barisan aplikasi utama (*Dock*). |
 | **Butang KIRI / KANAN (◀ / ▶)** | Bergerak antara aplikasi atau beralih antara menu atas. |
 | **Butang BACK (↩)** | Keluar dari Dashboard Cuaca atau Screensaver dan kembali ke skrin utama. |
@@ -120,19 +123,29 @@ Sangat mudah dan intuitif! Anda hanya perlukan butang arah pada remote TV anda:
 ### C. Gambar Latar Belakang Alam Semula Jadi (Bing Nature)
 * Gambar landskap definisi tinggi bertukar secara automatik dengan cerita tempat menarik (nama lokasi, negeri/negara, dan penerangan ringkas).
 
-### D. Screensaver StandBy & Auto-Off 2 Jam (Jimat Elektrik)
+### D. Screensaver StandBy & Pemasa Tidur (Jimat Elektrik)
 * **10 Minit Dibiarkan Tanpa Butang**: TV akan automatik masuk mod *StandBy Screensaver* berlatar hitam pekat (selamat untuk mengelakkan *screen burn-in* pada TV OLED/LED), memaparkan jam besar 110sp, tarikh Hijriah (cth: `🌙 12 Jamadilawal 1448H`), dan solat seterusnya.
-* **2 Jam Selepas Itu**: Jika TV terus tidak disentuh, sistem akan mematikan paparan TV (*sleep standby*) secara automatik.
+* **Pemasa Tidur (🌙)**: Tekan kapsul bulan di bar atas untuk tetapkan kiraan undur — 15, 30, 60, atau 120 minit. TV akan padam automatik apabila masa tamat.
 * **Untuk Hidupkan Semula**: Tekan mana-mana butang pada remote untuk bangunkan TV.
 
-### E. Pengurus Recent Apps & Pembersih RAM (Tekan 2 Kali Butang Home) ⚡
-Ciri pintar seumpama tvOS / Android TV premium untuk melihat dan membersihkan aplikasi latar belakang:
-* **Cara Buka**: Tekan butang **HOME dua kali berturut-turut** di mana-mana skrin atau aplikasi (atau butang App Switch pada remote tertentu).
-* **Tekan Home 2 Kali untuk 'Close All'**: Semasa berada di dalam skrin Recent Apps, **tekan butang HOME dua kali lagi** untuk terus menutup semua aplikasi dan membebaskan RAM serta-merta tanpa perlu menekan butang lain!
-* **Penamatan Sebenar (Genuine Force-Stop)**: Sistem kami dilengkapi integrasi pintar perkhidmatan Accessibility yang secara automatik menamatkan aplikasi latar mahupun aplikasi penstriman video degil (seperti Nuvio, YouTube, Stremio) hingga ke akar umbi, bukan sekadar membuang kad dari paparan.
-* **Kapsul Status RAM**: Di sudut atas kanan, memaparkan bacaan RAM masa nyata (contoh: `RAM 1.8 GB used of 2.3 GB`) dengan bar kemajuan.
-* **Tutup Aplikasi Individu**: Pada mana-mana kad aplikasi yang dipilih, **tekan butang ATAS (▲)** pada remote untuk menutup proses aplikasi tersebut dan membebaskan RAM serta-merta.
-* **Butang 'Close All' (Ikon Tong Sampah 🗑️)**: Gerakkan fokus ke hujung kanan senarai dan tekan butang bulat **Close All** untuk menutup semua aplikasi serentak dalam 1 klik!
+### E. Recent Apps Sistem (Tekan 2 Kali Butang Home)
+* **Cara Buka**: Tekan butang **HOME dua kali berturut-turut** dari mana-mana aplikasi atau skrin utama, atau tekan butang **Recents / App Switch** pada remote yang menyokongnya.
+* **Apa Yang Anda Nampak**: Laci Recent Apps asal Android TV — tukar antara aplikasi yang dibuka atau halau mana-mana yang tidak diperlukan terus dari sini.
+* **Tip**: Tekan **Back** semasa berada di laci Recents untuk kembali ke skrin utama Glass TV.
+
+### F. Sembunyikan Aplikasi
+Bersihkan paparan grid dari aplikasi yang jarang digunakan tanpa memadamkannya:
+* **Cara Sembunyikan**: Di skrin utama, **tekan lama** mana-mana ikon aplikasi untuk buka menu pilihan. Pilih **Sembunyikan App** — ikon terus hilang dari grid serta-merta, tanpa perlu mulakan semula launcher.
+* **Cara Pulihkan**: Buka **Tetapan Launcher** (ikon gear di sudut atas kanan) dan tatal ke bahagian **Aplikasi Tersembunyi** di bawah. Anda akan nampak senarai aplikasi yang disembunyikan dengan nama sebenar. Tekan **Nyahsembunyi** (*Unhide*) untuk paparkan semula aplikasi tersebut.
+* **Nota**: Hanya aplikasi yang betul-betul terpasang pada peranti anda yang dipaparkan dalam senarai ini. Entri lalai untuk aplikasi yang tidak dipasang ditapis secara automatik.
+
+### G. Ubah Suai Ikon Aplikasi
+Tukar ikon mana-mana aplikasi mengikut citarasa anda:
+* **Cara Ubah**: **Tekan lama** mana-mana ikon aplikasi untuk buka menu pilihan, kemudian pilih salah satu:
+  * **Tukar Ikon** — pilih ikon daripada pek ikon yang dipasang (cth: Arcticons, Lawnicons).
+  * **Muat Naik Ikon** — gunakan sebarang gambar dari peranti anda sebagai ikon khas.
+  * **Tetapkan Semula Ikon** — kembalikan ikon asal aplikasi tersebut.
+* **Pek Ikon**: Pasang pek ikon dari Play Store, kemudian pergi ke **Tetapan Launcher → Ikon → Pek Ikon** untuk guna secara menyeluruh pada semua ikon.
 
 ---
 
