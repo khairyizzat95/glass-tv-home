@@ -10,6 +10,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -67,6 +68,18 @@ final class Config {
     final String wallpaperFeed;
     /** Days between clearing the TV's app caches (see CacheCleaner); 0 never does. */
     final int cacheCleanDays;
+    /** Package name of the ADW/Nova icon pack to use; empty = system icons. */
+    final String iconPack;
+    /** True to play Aerial Views video as the launcher background (via Projectivity AIDL). */
+    final boolean aerialWallpaper;
+    /** Whether the PS5-style navigation tick plays on D-pad moves. */
+    final boolean soundNavEnabled;
+    /** Whether the PS5-style select chime plays on D-pad confirm. */
+    final boolean soundSelectEnabled;
+    /** Master sound volume 0–100 applied to both PS5 sound effects. */
+    final int soundVolume;
+    /** Last-used sleep timer preset in minutes; 0 = off. */
+    final int sleepTimerMinutes;
     /** Whether the overlay file was present and parsed. */
     final boolean overlayApplied;
 
@@ -78,7 +91,11 @@ final class Config {
                    int backgroundColor,
                    File wallpaper, List<File> wallpapers, long wallpaperIntervalMs,
                    boolean places, boolean wallpaperOnline, String wallpaperFeed,
-                   int cacheCleanDays, boolean overlayApplied) {
+                   int cacheCleanDays,
+                   String iconPack, boolean aerialWallpaper,
+                   boolean soundNavEnabled, boolean soundSelectEnabled, int soundVolume,
+                   int sleepTimerMinutes,
+                   boolean overlayApplied) {
         this.dockApps = Collections.unmodifiableList(dockApps);
         this.hiddenApps = Collections.unmodifiableList(hiddenApps);
         this.liveTvPackage = liveTvPackage;
@@ -103,6 +120,12 @@ final class Config {
         this.wallpaperOnline = wallpaperOnline;
         this.wallpaperFeed = wallpaperFeed != null ? wallpaperFeed : "";
         this.cacheCleanDays = cacheCleanDays;
+        this.iconPack = iconPack != null ? iconPack : "";
+        this.aerialWallpaper = aerialWallpaper;
+        this.soundNavEnabled = soundNavEnabled;
+        this.soundSelectEnabled = soundSelectEnabled;
+        this.soundVolume = soundVolume;
+        this.sleepTimerMinutes = sleepTimerMinutes;
         this.overlayApplied = overlayApplied;
     }
 
@@ -191,11 +214,19 @@ final class Config {
         }
         int cacheCleanDays = json != null ? integer(json, "cache_clean_days", CacheCleaner.DEFAULT_DAYS, 0, 90)
                 : CacheCleaner.DEFAULT_DAYS;
+        String iconPack = json != null ? string(json, "icon_pack", "") : "";
+        boolean aerialWallpaper = json != null && bool(json, "aerial_wallpaper", false);
+        boolean soundNavEnabled = json == null || bool(json, "sound_nav_enabled", true);
+        boolean soundSelectEnabled = json == null || bool(json, "sound_select_enabled", true);
+        int soundVolume = json != null ? integer(json, "sound_volume", 80, 0, 100) : 80;
+        int sleepTimerMinutes = json != null ? integer(json, "sleep_timer_minutes", 0, 0, 120) : 0;
 
         return new Config(dock, hidden, liveTv, liveTvAction, panelService, panelAction, inputAction,
                 Math.max(1, columns), Math.max(0, rowsBelow), shamsi, moduleCards, reducedMotion,
                 vpn, homeSettings, networkPill, liveTvRow, background, wallpaper, wallpapers, wallpaperIntervalMs,
-                places, wallpaperOnline, wallpaperFeed, cacheCleanDays, applied);
+                places, wallpaperOnline, wallpaperFeed, cacheCleanDays,
+                iconPack, aerialWallpaper, soundNavEnabled, soundSelectEnabled, soundVolume,
+                sleepTimerMinutes, applied);
     }
 
     /** Reads and parses the overlay; any problem means "no overlay", never a crash on the home screen. */
@@ -256,5 +287,42 @@ final class Config {
             if (item instanceof String && !((String) item).trim().isEmpty()) out.add(((String) item).trim());
         }
         return out;
+    }
+
+    /**
+     * Atomically writes (or updates) one key in config.json inside {@code dir}.
+     * Reads the existing file first so other keys are preserved. Must be called
+     * from a single serialised background thread to avoid concurrent write races.
+     */
+    static void save(File dir, String key, Object value) {
+        if (dir == null) return;
+        File file = new File(dir, FILE_NAME);
+        File tmp = new File(dir, FILE_NAME + ".tmp");
+        try {
+            JSONObject json = new JSONObject();
+            if (file.isFile() && file.length() > 0 && file.length() < 64 * 1024) {
+                try (InputStream in = new FileInputStream(file)) {
+                    byte[] buf = new byte[(int) file.length()];
+                    int n = 0, r;
+                    while (n < buf.length && (r = in.read(buf, n, buf.length - n)) > 0) n += r;
+                    String text = new String(buf, 0, n, StandardCharsets.UTF_8);
+                    if (text.startsWith("﻿")) text = text.substring(1);
+                    try { json = new JSONObject(text); } catch (Exception ignored) {}
+                }
+            }
+            json.put(key, value);
+            byte[] out = json.toString(2).getBytes(StandardCharsets.UTF_8);
+            java.nio.file.Files.write(tmp.toPath(), out);
+            try {
+                java.nio.file.Files.move(tmp.toPath(), file.toPath(),
+                        java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+            } catch (java.nio.file.AtomicMoveNotSupportedException ignored2) {
+                java.nio.file.Files.move(tmp.toPath(), file.toPath(),
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (Exception e) {
+            try { Log.w(TAG, "save failed for key=" + key + ": " + e.getMessage()); } catch (RuntimeException ignored) {}
+            tmp.delete();
+        }
     }
 }
