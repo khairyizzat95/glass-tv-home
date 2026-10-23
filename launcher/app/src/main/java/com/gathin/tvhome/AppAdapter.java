@@ -242,6 +242,8 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
                 continue;
             }
             Drawable banner = loadBanner(pm, ri);
+            // A custom icon override always wins over the banner.
+            if (banner != null && customIcons != null && customIcons.containsKey(pkg)) banner = null;
             // The icon only shows on a tile without a banner; custom override, then pack, then system.
             Drawable icon = null;
             if (banner == null) {
