@@ -67,10 +67,6 @@ public class LauncherSettingsActivity extends Activity {
                 cfg.sleepTimerMinutes,
                 v -> Config.save(cfgDir, "sleep_timer_minutes", v));
 
-        // ── Hidden Apps ────────────────────────────────────────────────────
-        addSection(content, "Hidden Apps");
-        addHiddenAppsManager(content, new ArrayList<>(cfg.hiddenApps));
-
         // ── Sound ──────────────────────────────────────────────────────────
         addSection(content, "Sound");
         addToggle(content, "Navigation Sound",
@@ -84,6 +80,10 @@ public class LauncherSettingsActivity extends Activity {
         addSeekBar(content, "Sound Volume",
                 cfg.soundVolume, 0, 100,
                 v -> Config.save(cfgDir, "sound_volume", v));
+
+        // ── Hidden Apps ────────────────────────────────────────────────────
+        addSection(content, "Hidden Apps");
+        addHiddenAppsManager(content, new ArrayList<>(cfg.hiddenApps));
 
     }
 
