@@ -71,9 +71,15 @@ final class IconPackLoader {
         return packRes != null;
     }
 
+    String getPackageName() { return packPkg; }
+
     public static class IconEntry {
         public final String drawableName;
-        IconEntry(String drawableName) { this.drawableName = drawableName; }
+        public final IconPackLoader loader;
+        IconEntry(String drawableName, IconPackLoader loader) {
+            this.drawableName = drawableName;
+            this.loader = loader;
+        }
     }
 
     public List<IconEntry> getAllIcons() {
@@ -93,7 +99,7 @@ final class IconPackLoader {
                 }
             } catch (Exception ignored) {}
         }
-        for (String name : seen) result.add(new IconEntry(name));
+        for (String name : seen) result.add(new IconEntry(name, this));
         return result;
     }
 

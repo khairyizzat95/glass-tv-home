@@ -117,6 +117,7 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
     }
 
     private final Context ctx;
+    private final android.content.pm.PackageManager pm;
     private final TileListener listener;
     private final int dockSize;
     /** Dock order (config.xml dock_apps, or a theme's config.json). */
@@ -131,14 +132,17 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
     private final List<String> arranged = new ArrayList<>();
     /** Optional icon pack; null means system icons. Updated via {@link #setIconPackLoader}. */
     private IconPackLoader iconPackLoader;
-    /** Custom icon overrides: packageName → drawableName in the icon pack. */
+    /** Custom icon overrides: packageName → "iconPackPkg/drawableName". */
     private Map<String, String> customIcons;
+    /** Cache of loaders for packs referenced by custom icon overrides. */
+    private final Map<String, IconPackLoader> loaderCache = new HashMap<>();
     private static final String ORDER_PREFS = "tiles", ORDER_KEY = "order";
     /** Rebind payload: only whether the tile's name shows, which depends on being in the dock. */
     private static final Object DOCK_CHANGED = new Object();
 
     AppAdapter(Context ctx, TileListener listener, int dockSize, Config cfg) {
         this.ctx = ctx;
+        this.pm = ctx.getPackageManager();
         this.listener = listener;
         this.dockSize = dockSize;
         this.favourites = cfg.dockApps;
@@ -161,6 +165,7 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
 
     void setCustomIcons(Map<String, String> icons) {
         this.customIcons = icons;
+        loaderCache.clear();
         builtApps.clear();
         builtFrom = null;
     }
@@ -240,9 +245,16 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
             // The icon only shows on a tile without a banner; custom override, then pack, then system.
             Drawable icon = null;
             if (banner == null) {
-                String customDrawable = (customIcons != null) ? customIcons.get(pkg) : null;
-                if (customDrawable != null && iconPackLoader != null) {
-                    icon = iconPackLoader.getIconByName(customDrawable);
+                String customValue = (customIcons != null) ? customIcons.get(pkg) : null;
+                if (customValue != null) {
+                    int sep = customValue.indexOf('/');
+                    if (sep > 0) {
+                        String packPkg = customValue.substring(0, sep);
+                        String drawableName = customValue.substring(sep + 1);
+                        IconPackLoader packLoader = loaderCache.computeIfAbsent(
+                                packPkg, p -> new IconPackLoader(pm, p));
+                        icon = packLoader.getIconByName(drawableName);
+                    }
                 }
                 if (icon == null) icon = (iconPackLoader != null) ? iconPackLoader.getIcon(pkg) : null;
                 if (icon == null) icon = ri.loadIcon(pm);

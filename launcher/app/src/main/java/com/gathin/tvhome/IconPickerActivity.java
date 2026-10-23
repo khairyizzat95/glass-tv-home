@@ -2,6 +2,8 @@ package com.gathin.tvhome;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
@@ -20,6 +22,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
@@ -28,9 +31,10 @@ import java.util.concurrent.Executors;
 public class IconPickerActivity extends Activity {
     static final String EXTRA_PACKAGE = "pkg";
     static final String EXTRA_DRAWABLE = "drawable";
+    static final String EXTRA_ICON_PACK = "icon_pack";
+    static final int REQUEST_CODE = 4821;
     private static final int COLS = 6;
 
-    private IconPackLoader loader;
     private List<IconPackLoader.IconEntry> allIcons = new ArrayList<>();
     private IconGridAdapter gridAdapter;
     private final ExecutorService pool = Executors.newFixedThreadPool(4);
@@ -39,8 +43,16 @@ public class IconPickerActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         String pkg = getIntent().getStringExtra(EXTRA_PACKAGE);
-        Config cfg = Config.load(this);
-        loader = new IconPackLoader(getPackageManager(), cfg.iconPack);
+
+        // Collect all installed icon packs regardless of which one is configured.
+        PackageManager pm = getPackageManager();
+        List<ResolveInfo> packInfos = pm.queryIntentActivities(
+                new Intent("org.adw.launcher.THEMES"), 0);
+        List<IconPackLoader> loaders = new ArrayList<>();
+        for (ResolveInfo ri : packInfos) {
+            IconPackLoader l = new IconPackLoader(pm, ri.activityInfo.packageName);
+            if (l.isActive()) loaders.add(l);
+        }
 
         float dp = getResources().getDisplayMetrics().density;
 
@@ -78,27 +90,31 @@ public class IconPickerActivity extends Activity {
 
         setContentView(root);
 
+        if (loaders.isEmpty()) {
+            search.setVisibility(View.GONE);
+            grid.setVisibility(View.GONE);
+            TextView empty = new TextView(this);
+            empty.setText("No icon packs installed.\nInstall an icon pack app to use this feature.");
+            empty.setTextColor(0xFF909098);
+            empty.setTextSize(16f);
+            empty.setGravity(Gravity.CENTER);
+            empty.setPadding(0, (int)(48*dp), 0, 0);
+            root.addView(empty);
+            return;
+        }
+
         pool.execute(() -> {
-            List<IconPackLoader.IconEntry> icons = loader.getAllIcons();
+            // Aggregate icons from all installed packs, sorted alphabetically.
+            List<IconPackLoader.IconEntry> icons = new ArrayList<>();
+            for (IconPackLoader l : loaders) icons.addAll(l.getAllIcons());
+            Collections.sort(icons, (a, b) -> a.drawableName.compareTo(b.drawableName));
             String defaultFilter = defaultFilter(pkg);
             List<IconPackLoader.IconEntry> filtered = filter(icons, defaultFilter);
             runOnUiThread(() -> {
                 allIcons = icons;
-                if (icons.isEmpty()) {
-                    search.setVisibility(android.view.View.GONE);
-                    grid.setVisibility(android.view.View.GONE);
-                    TextView empty = new TextView(IconPickerActivity.this);
-                    empty.setText("No icon pack selected.\nGo to Launcher Settings → Icons to choose one.");
-                    empty.setTextColor(0xFF909098);
-                    empty.setTextSize(16f);
-                    empty.setGravity(android.view.Gravity.CENTER);
-                    empty.setPadding(0, (int)(48*dp), 0, 0);
-                    root.addView(empty);
-                } else {
-                    search.setText(defaultFilter);
-                    search.setSelection(search.getText().length());
-                    gridAdapter.setItems(filtered);
-                }
+                search.setText(defaultFilter);
+                search.setSelection(search.getText().length());
+                gridAdapter.setItems(filtered);
             });
         });
 
@@ -196,9 +212,10 @@ public class IconPickerActivity extends Activity {
             IconPackLoader.IconEntry e = items.get(pos);
             h.label.setText(e.drawableName);
             h.icon.setImageDrawable(null);
+            // Tag prevents stale async loads from landing on the wrong cell.
             h.itemView.setTag(e.drawableName);
             pool.execute(() -> {
-                Drawable d = loader.getIconByName(e.drawableName);
+                Drawable d = e.loader.getIconByName(e.drawableName);
                 runOnUiThread(() -> {
                     if (e.drawableName.equals(h.itemView.getTag())) h.icon.setImageDrawable(d);
                 });
@@ -206,6 +223,7 @@ public class IconPickerActivity extends Activity {
             h.itemView.setOnClickListener(v -> {
                 Intent result = new Intent();
                 result.putExtra(EXTRA_PACKAGE, targetPkg);
+                result.putExtra(EXTRA_ICON_PACK, e.loader.getPackageName());
                 result.putExtra(EXTRA_DRAWABLE, e.drawableName);
                 setResult(RESULT_OK, result);
                 finish();

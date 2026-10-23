@@ -1701,10 +1701,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_ICON_PICKER && resultCode == RESULT_OK && data != null) {
             String pkg = data.getStringExtra(IconPickerActivity.EXTRA_PACKAGE);
+            String iconPack = data.getStringExtra(IconPickerActivity.EXTRA_ICON_PACK);
             String drawable = data.getStringExtra(IconPickerActivity.EXTRA_DRAWABLE);
-            if (pkg != null && drawable != null) {
+            if (pkg != null && iconPack != null && drawable != null) {
+                String value = iconPack + "/" + drawable;
                 File cfgDir = Config.dir(this);
-                new Thread(() -> CustomIconStore.save(cfgDir, pkg, drawable)).start();
+                new Thread(() -> CustomIconStore.save(cfgDir, pkg, value)).start();
                 adapter.setCustomIcons(CustomIconStore.load(cfgDir));
                 reloadApps(false);
             }
