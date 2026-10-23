@@ -194,6 +194,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean screensaverActive = false;
     private View screensaverView;
     private boolean wallpaperFullscreen = false;
+    private AerialWallpaperPlayer aerialPlayer;
     private View mainContent;
     private static final long DOUBLE_BACK_DELAY_MS = 350L;
     private Runnable singleBackRunnable = null;
@@ -295,10 +296,15 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         placesMode = cfg.places;
         // Places only, when they are on: never the theme's own pictures, even before the first
         // week's places have arrived.
-        if (placesMode) wallpapers = PlaceWallpapers.list(this);
-        else if (cfg.wallpaperOnline && wallpapers.isEmpty()) wallpapers = OnlineWallpapers.list(this);
-        if (!wallpapers.isEmpty()) showNextWallpaper(false);
-        else if (cfg.wallpaper != null && !placesMode) setWallpaper(decodeWallpaper(cfg.wallpaper), false);
+        if (cfg.aerialWallpaper) {
+            aerialPlayer = new AerialWallpaperPlayer(this, root);
+            aerialPlayer.start();
+        } else {
+            if (placesMode) wallpapers = PlaceWallpapers.list(this);
+            else if (cfg.wallpaperOnline && wallpapers.isEmpty()) wallpapers = OnlineWallpapers.list(this);
+            if (!wallpapers.isEmpty()) showNextWallpaper(false);
+            else if (cfg.wallpaper != null && !placesMode) setWallpaper(decodeWallpaper(cfg.wallpaper), false);
+        }
         mainContent = findViewById(R.id.mainContent);
         glass = findViewById(R.id.glass);
         ambient = findViewById(R.id.ambient);
@@ -1036,6 +1042,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if (aerialPlayer != null) { aerialPlayer.stop(); aerialPlayer = null; }
         SoundEffects.release();
         wallDecoder.shutdownNow();
         ConnectivityManager cm = getSystemService(ConnectivityManager.class);
