@@ -713,7 +713,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         View timerDisplay = findViewById(R.id.timerDisplay);
         View btnSleepTimer = findViewById(R.id.btnSleepTimer);
         if (timerDisplay != null) timerDisplay.setVisibility(View.GONE);
-        if (btnSleepTimer != null) btnSleepTimer.setAlpha(t.isActive() ? 1.0f : 0.5f);
+        // No alpha dimming — button stays consistent with other top-right pills.
     }
 
     /** Puts a picture behind everything, cross-fading from the previous one when asked. */
