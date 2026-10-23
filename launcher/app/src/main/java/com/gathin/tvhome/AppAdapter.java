@@ -242,27 +242,33 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
                 continue;
             }
             Drawable banner = loadBanner(pm, ri);
-            // A custom icon override always wins over the banner.
-            if (banner != null && customIcons != null && customIcons.containsKey(pkg)) banner = null;
-            // The icon only shows on a tile without a banner; custom override, then pack, then system.
             Drawable icon = null;
-            if (banner == null) {
-                String customValue = (customIcons != null) ? customIcons.get(pkg) : null;
+            // A user-chosen icon always replaces the tile's banner so it fills the full card area
+            // (same centerCrop ImageView, no inside label). Loaded below; falls through to normal
+            // banner/icon logic when no custom icon is stored.
+            String customValue = (customIcons != null) ? customIcons.get(pkg) : null;
+            if (customValue != null) {
+                Drawable customIcon = null;
                 if ("__local__".equals(customValue)) {
                     java.io.File iconFile = new java.io.File(
                             new java.io.File(Config.dir(ctx), "icons"), pkg + ".png");
-                    if (iconFile.exists()) icon = android.graphics.drawable.Drawable.createFromPath(iconFile.getAbsolutePath());
-                } else if (customValue != null) {
+                    if (iconFile.exists())
+                        customIcon = android.graphics.drawable.Drawable.createFromPath(iconFile.getAbsolutePath());
+                } else {
                     int sep = customValue.indexOf('/');
                     if (sep > 0) {
                         String packPkg = customValue.substring(0, sep);
                         String drawableName = customValue.substring(sep + 1);
                         IconPackLoader packLoader = loaderCache.computeIfAbsent(
                                 packPkg, p -> new IconPackLoader(pm, p));
-                        icon = packLoader.getIconByName(drawableName);
+                        customIcon = packLoader.getIconByName(drawableName);
                     }
                 }
-                if (icon == null) icon = (iconPackLoader != null) ? iconPackLoader.getIcon(pkg) : null;
+                if (customIcon != null) banner = customIcon;
+            }
+            // Icon mode (small icon + label inside card) for apps with no banner and no custom icon.
+            if (banner == null) {
+                icon = (iconPackLoader != null) ? iconPackLoader.getIcon(pkg) : null;
                 if (icon == null) icon = ri.loadIcon(pm);
             }
             if (card != null) {
