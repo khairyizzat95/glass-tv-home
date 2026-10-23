@@ -36,6 +36,7 @@ final class AerialWallpaperPlayer implements TextureView.SurfaceTextureListener 
     private final Context ctx;
     private final ViewGroup container;
     private java.util.Set<String> sceneFilter = java.util.Collections.emptySet();
+    private boolean usingBundledContent = false;
     private TextureView textureView;
     private MediaPlayer mediaPlayer;
     private IWallpaperProviderService providerService;
@@ -171,6 +172,7 @@ final class AerialWallpaperPlayer implements TextureView.SurfaceTextureListener 
                 aerialWallpapers.add(w);
             }
             retryHandler.post(() -> {
+                usingBundledContent = true;
                 wallpapers = aerialWallpapers;
                 Log.i(TAG, "Bundled aerial: loaded " + wallpapers.size() + " videos — starting playback");
                 if (surfaceReady) playNext();
@@ -207,29 +209,37 @@ final class AerialWallpaperPlayer implements TextureView.SurfaceTextureListener 
 
     void setSceneFilter(java.util.Set<String> scenes) {
         this.sceneFilter = scenes != null ? scenes : java.util.Collections.emptySet();
+        Log.i(TAG, "setSceneFilter: " + (this.sceneFilter.isEmpty() ? "all scenes" : this.sceneFilter));
     }
 
-    /** Re-queries the AerialViews service so category/filter changes take effect immediately.
-     *  Unbinds and rebinds so AerialViews rebuilds its playlist from current settings. */
+    /** Applies the current scene filter immediately. If already on bundled content, rebuilds
+     *  the filtered list right away without waiting for the AerialViews retry cycle. */
     void refresh() {
-        Log.i(TAG, "refresh() called — unbinding and rebinding AerialViews service");
-        wallpapers = null;
         wallpaperIndex = 0;
         retryCount = 0;
         retryHandler.removeCallbacksAndMessages(null);
-        // Unbind to force AerialViews to drop its cached playlist.
-        if (bound) {
-            try { ctx.unbindService(connection); } catch (Exception ignored) {}
-            bound = false;
-            providerService = null;
-        }
-        // Rebind — onServiceConnected → fetchWallpapers() with fresh settings.
-        Intent intent = new Intent(BIND_ACTION);
-        intent.setComponent(new ComponentName(AERIAL_PACKAGE, AERIAL_SERVICE_CLASS));
-        try {
-            bound = ctx.bindService(intent, connection, Context.BIND_AUTO_CREATE);
-        } catch (Exception e) {
-            Log.w(TAG, "refresh rebind failed: " + e.getMessage());
+        if (usingBundledContent) {
+            // Already on bundled content — skip the 50s AerialViews retry cycle and
+            // immediately reload with the new filter.
+            Log.i(TAG, "refresh() — bundled mode, rebuilding filtered list immediately");
+            wallpapers = null;
+            fetchAppleAerials();
+        } else {
+            // Still trying AerialViews — unbind and rebind to get a fresh playlist.
+            Log.i(TAG, "refresh() — unbinding and rebinding AerialViews service");
+            wallpapers = null;
+            if (bound) {
+                try { ctx.unbindService(connection); } catch (Exception ignored) {}
+                bound = false;
+                providerService = null;
+            }
+            Intent intent = new Intent(BIND_ACTION);
+            intent.setComponent(new ComponentName(AERIAL_PACKAGE, AERIAL_SERVICE_CLASS));
+            try {
+                bound = ctx.bindService(intent, connection, Context.BIND_AUTO_CREATE);
+            } catch (Exception e) {
+                Log.w(TAG, "refresh rebind failed: " + e.getMessage());
+            }
         }
     }
 
