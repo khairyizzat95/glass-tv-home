@@ -187,6 +187,17 @@ final class AerialWallpaperPlayer implements TextureView.SurfaceTextureListener 
         try { return textureView.getBitmap(); } catch (Exception e) { return null; }
     }
 
+    /** Re-queries the AerialViews service so category/filter changes take effect immediately. */
+    void refresh() {
+        wallpapers = null;
+        wallpaperIndex = 0;
+        retryCount = 0;
+        if (providerService != null) {
+            fetchWallpapers();
+        }
+        // If not yet bound, onServiceConnected → fetchWallpapers() handles it automatically.
+    }
+
     void stop() {
         retryHandler.removeCallbacksAndMessages(null);
         releasePlayer();

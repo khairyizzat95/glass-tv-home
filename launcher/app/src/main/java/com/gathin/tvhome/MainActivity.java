@@ -858,7 +858,12 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private void syncAerialWallpaper() {
         Config liveCfg = Config.load(this);
         boolean want = liveCfg.aerialWallpaper;
-        if (want == aerialActive) return;
+        if (want == aerialActive) {
+            // Aerial already running — re-query the service so any AerialViews setting
+            // changes (category filter, etc.) take effect immediately on resume.
+            if (want && aerialPlayer != null) aerialPlayer.refresh();
+            return;
+        }
         aerialActive = want;
         if (want) {
             // Start aerial video wallpaper
