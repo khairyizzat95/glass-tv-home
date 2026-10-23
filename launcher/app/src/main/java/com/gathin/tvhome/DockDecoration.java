@@ -17,6 +17,7 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
 
     private final int dockSize;
     private final float density;
+    private final boolean videoWallpaper;
     private final Paint band = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint trayShadowPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final GlassRim edge;
@@ -28,11 +29,14 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
     /** The tray as last drawn, in the grid's coordinates: where the focus shape shows on it. */
     final RectF area = new RectF();
 
-    DockDecoration(int dockSize, float density) {
+    DockDecoration(int dockSize, float density, boolean videoWallpaper) {
         this.dockSize = dockSize;
         this.density = density;
+        this.videoWallpaper = videoWallpaper;
         // Same glass as the top-bar pills (GlassDrawable): an even veil and a shining edge.
-        band.setColor(0x12FFFFFF);
+        // When a live video wallpaper is playing, the blurred-screenshot glass is replaced by a
+        // plain 10% white fill so the video shows through cleanly.
+        band.setColor(videoWallpaper ? 0x1AFFFFFF : 0x12FFFFFF);
         trayShadowPaint.setColor(0x38000000);
         trayShadowPaint.setMaskFilter(new android.graphics.BlurMaskFilter(14f * density, android.graphics.BlurMaskFilter.Blur.NORMAL));
         edge = new GlassRim(1.5f * density, 0xD9FFFFFF, 0x1AFFFFFF, 0.5f);
@@ -78,13 +82,18 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
         rect.inset(-pad, -pad);
         area.set(rect);
         float radius = 26 * density;
-        // Soft drop shadow under the glass dock tray
-        RectF trayShadow = new RectF(rect);
-        trayShadow.offset(0, 4f * density);
-        c.drawRoundRect(trayShadow, radius, radius, trayShadowPaint);
+        if (videoWallpaper) {
+            // Video wallpaper: plain 10% white fill — the live video shows through cleanly.
+            c.drawRoundRect(rect, radius, radius, band);
+        } else {
+            // Soft drop shadow under the glass dock tray
+            RectF trayShadow = new RectF(rect);
+            trayShadow.offset(0, 4f * density);
+            c.drawRoundRect(trayShadow, radius, radius, trayShadowPaint);
 
-        blur.draw(c, parent, rect, radius, 1f);
-        c.drawRoundRect(rect, radius, radius, band);
+            blur.draw(c, parent, rect, radius, 1f);
+            c.drawRoundRect(rect, radius, radius, band);
+        }
         // The focus frame of a dock tile sits on the tray's glass and under the tiles; the rest of
         // the shape, outside the tray, is the glider itself showing behind.
         if (glider != null && glider.isShowing()) {
@@ -98,11 +107,13 @@ public class DockDecoration extends RecyclerView.ItemDecoration {
             glider.drawShape(c, gliderAt[0] - at[0], gliderAt[1] - at[1], parent);
             c.restore();
         }
-        // Drawn just inside the tray, as the pills draw theirs: a stroke centred on the boundary
-        // spreads over an extra pixel and reads thicker than the pills' edge.
-        float half = edge.paint.getStrokeWidth() / 2f;
-        rect.inset(half, half);
-        edge.fit(rect);
-        c.drawRoundRect(rect, radius - half, radius - half, edge.paint);
+        if (!videoWallpaper) {
+            // Drawn just inside the tray, as the pills draw theirs: a stroke centred on the boundary
+            // spreads over an extra pixel and reads thicker than the pills' edge.
+            float half = edge.paint.getStrokeWidth() / 2f;
+            rect.inset(half, half);
+            edge.fit(rect);
+            c.drawRoundRect(rect, radius - half, radius - half, edge.paint);
+        }
     }
 }

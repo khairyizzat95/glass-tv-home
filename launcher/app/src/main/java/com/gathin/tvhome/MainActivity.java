@@ -460,7 +460,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         });
         grid.setHasFixedSize(true);
         grid.setItemAnimator(null);
-        DockDecoration tray = new DockDecoration(COLUMNS, density);
+        DockDecoration tray = new DockDecoration(COLUMNS, density, cfg.aerialWallpaper);
         grid.addItemDecoration(tray);
         // The top-right buttons line up with the dock, which is only known once the tiles are laid out.
         grid.getViewTreeObserver().addOnGlobalLayoutListener(this::alignTopButtons);
