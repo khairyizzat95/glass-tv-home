@@ -99,6 +99,13 @@ public class HomeKeyService extends AccessibilityService {
         return false;
     }
 
+    public static boolean showRecents() {
+        if (instance != null) {
+            return instance.performGlobalAction(GLOBAL_ACTION_RECENTS);
+        }
+        return false;
+    }
+
     // ---- Sleep timer integration ----
 
     /** Called by SleepTimer.Listener.onExpired() to put the TV to sleep. */

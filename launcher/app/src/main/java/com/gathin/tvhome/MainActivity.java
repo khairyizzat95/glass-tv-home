@@ -936,7 +936,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                 handler.removeCallbacks(singleHomeRunnable);
                 singleHomeRunnable = null;
             }
-            // double-Home: just let it fall through
+            HomeKeyService.showRecents();
+            return;
         } else {
             lastHomePressTime = now;
             singleHomeRunnable = () -> {
@@ -1921,7 +1922,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                         handler.removeCallbacks(singleHomeRunnable);
                         singleHomeRunnable = null;
                     }
-                    // double-Home: just let it fall through
+                    HomeKeyService.showRecents();
+                    return true;
                 } else {
                     lastHomePressTime = now;
                     singleHomeRunnable = () -> {
