@@ -153,6 +153,8 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
     private boolean moduleCards;
     /** Calmer motion for weak GPUs (config.xml, reduced_motion): stiff spring, short fades, no replay. */
     private boolean reducedMotion;
+    /** Whether to show the app description line below the focused tile name. */
+    private boolean showAppDescription;
     /** hidden_apps as the adapter sees them (config.xml or a theme's config.json): a hidden app gets no card either. */
     private Set<String> hiddenApps = Collections.emptySet();
     private List<Cards.Card> cards = Collections.emptyList();
@@ -440,6 +442,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         PrayerTimes.syncIfDue(this, this::updatePrayerTimes);
         vpnApp = cfg.vpnApp;
         moduleCards = cfg.moduleCards;
+        showAppDescription = cfg.showAppDescription;
         hiddenApps = new HashSet<>(cfg.hiddenApps);
 
         grid = findViewById(R.id.grid);
@@ -565,11 +568,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             return true;
         });
         btnSettings.setOnClickListener(v ->
-                startActivity(new Intent(this, LauncherSettingsActivity.class)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)));
+                open(systemIntent(Settings.ACTION_SETTINGS)));
         btnSettings.setOnLongClickListener(v -> {
-            if (moduleCards) { showModuleCards(); return true; }
-            open(systemIntent(Settings.ACTION_SETTINGS));
+            startActivity(new Intent(this, LauncherSettingsActivity.class)
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             return true;
         });
 
@@ -1393,7 +1395,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             heroDesc.setLayoutParams(descLp);
         }
         heroDesc.setText(desc);
-        heroDesc.setVisibility(desc.isEmpty() ? View.GONE : View.VISIBLE);
+        heroDesc.setVisibility((desc.isEmpty() || !showAppDescription) ? View.GONE : View.VISIBLE);
     }
 
     /**
