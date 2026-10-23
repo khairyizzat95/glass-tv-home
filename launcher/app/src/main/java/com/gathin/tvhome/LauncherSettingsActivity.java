@@ -16,7 +16,11 @@ import android.widget.TextView;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import org.json.JSONArray;
 
 public class LauncherSettingsActivity extends Activity {
 
@@ -51,6 +55,7 @@ public class LauncherSettingsActivity extends Activity {
                 "Use AerialViews app as animated background",
                 cfg.aerialWallpaper,
                 v -> Config.save(cfgDir, "aerial_wallpaper", v));
+        addAerialScenePicker(content, cfg.aerialScenes);
 
         // ── Sleep Timer ────────────────────────────────────────────────────
         addSection(content, "Sleep Timer");
@@ -74,6 +79,40 @@ public class LauncherSettingsActivity extends Activity {
                 cfg.soundVolume, 0, 100,
                 v -> Config.save(cfgDir, "sound_volume", v));
 
+    }
+
+    // ── Aerial scene picker ────────────────────────────────────────────────
+
+    private static final String[] SCENE_KEYS   = {"beach","city","countryside","nature","sea","space","waterfall"};
+    private static final String[] SCENE_LABELS = {"Beach","City","Countryside","Nature","Sea","Space","Waterfall"};
+
+    private void addAerialScenePicker(LinearLayout parent, Set<String> currentScenes) {
+        boolean[] checked = new boolean[SCENE_KEYS.length];
+        for (int i = 0; i < SCENE_KEYS.length; i++)
+            checked[i] = currentScenes.isEmpty() || currentScenes.contains(SCENE_KEYS[i]);
+
+        String subtitle = currentScenes.isEmpty() ? "All scenes" : currentScenes.size() + " selected";
+        LinearLayout row = makeRow(parent, "Aerial Scene Types", subtitle);
+        row.setOnClickListener(v -> {
+            boolean[] tmp = checked.clone();
+            new AlertDialog.Builder(this)
+                    .setTitle("Select Scene Types")
+                    .setMultiChoiceItems(SCENE_LABELS, tmp, (d, which, isChecked) -> tmp[which] = isChecked)
+                    .setPositiveButton("OK", (d, w) -> {
+                        System.arraycopy(tmp, 0, checked, 0, checked.length);
+                        Set<String> selected = new HashSet<>();
+                        for (int i = 0; i < SCENE_KEYS.length; i++)
+                            if (checked[i]) selected.add(SCENE_KEYS[i]);
+                        // If all selected, store empty array (= all scenes = default)
+                        boolean allSelected = selected.size() == SCENE_KEYS.length;
+                        JSONArray arr = new JSONArray();
+                        if (!allSelected) for (String s : selected) arr.put(s);
+                        Config.save(cfgDir, "aerial_scenes", arr);
+                        updateSubtitle(row, allSelected ? "All scenes" : selected.size() + " selected");
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        });
     }
 
     // ── Section header ─────────────────────────────────────────────────────

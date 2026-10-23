@@ -859,9 +859,10 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         Config liveCfg = Config.load(this);
         boolean want = liveCfg.aerialWallpaper;
         if (want == aerialActive) {
-            // Aerial already running — re-query the service so any AerialViews setting
-            // changes (category filter, etc.) take effect immediately on resume.
-            if (want && aerialPlayer != null) aerialPlayer.refresh();
+            if (want && aerialPlayer != null) {
+                aerialPlayer.setSceneFilter(liveCfg.aerialScenes);
+                aerialPlayer.refresh();
+            }
             return;
         }
         aerialActive = want;
@@ -869,6 +870,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             // Start aerial video wallpaper
             if (aerialPlayer == null) {
                 aerialPlayer = new AerialWallpaperPlayer(this, root);
+                aerialPlayer.setSceneFilter(liveCfg.aerialScenes);
                 aerialPlayer.start();
                 handler.removeCallbacks(aerialBackdropTick);
                 handler.postDelayed(aerialBackdropTick, AERIAL_BACKDROP_INTERVAL_MS);

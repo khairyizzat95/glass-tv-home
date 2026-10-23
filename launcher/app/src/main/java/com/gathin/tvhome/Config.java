@@ -72,6 +72,8 @@ final class Config {
     final String iconPack;
     /** True to play Aerial Views video as the launcher background (via Projectivity AIDL). */
     final boolean aerialWallpaper;
+    /** Scene types to show when using bundled aerial videos. Empty set = all scenes. */
+    final java.util.Set<String> aerialScenes;
     /** Whether the PS5-style navigation tick plays on D-pad moves. */
     final boolean soundNavEnabled;
     /** Whether the PS5-style select chime plays on D-pad confirm. */
@@ -93,7 +95,7 @@ final class Config {
                    File wallpaper, List<File> wallpapers, long wallpaperIntervalMs,
                    boolean places, boolean wallpaperOnline, String wallpaperFeed,
                    int cacheCleanDays,
-                   String iconPack, boolean aerialWallpaper,
+                   String iconPack, boolean aerialWallpaper, java.util.Set<String> aerialScenes,
                    boolean soundNavEnabled, boolean soundSelectEnabled, int soundVolume,
                    int sleepTimerMinutes, boolean showWallpaperInfo,
                    boolean overlayApplied) {
@@ -123,6 +125,7 @@ final class Config {
         this.cacheCleanDays = cacheCleanDays;
         this.iconPack = iconPack != null ? iconPack : "";
         this.aerialWallpaper = aerialWallpaper;
+        this.aerialScenes = java.util.Collections.unmodifiableSet(aerialScenes != null ? aerialScenes : new java.util.HashSet<>());
         this.soundNavEnabled = soundNavEnabled;
         this.soundSelectEnabled = soundSelectEnabled;
         this.soundVolume = soundVolume;
@@ -218,6 +221,11 @@ final class Config {
                 : CacheCleaner.DEFAULT_DAYS;
         String iconPack = json != null ? string(json, "icon_pack", "") : "";
         boolean aerialWallpaper = json != null && bool(json, "aerial_wallpaper", false);
+        java.util.Set<String> aerialScenes = new java.util.HashSet<>();
+        if (json != null) {
+            List<String> sceneList = stringList(json, "aerial_scenes", new ArrayList<>());
+            aerialScenes.addAll(sceneList);
+        }
         boolean soundNavEnabled = json == null || bool(json, "sound_nav_enabled", true);
         boolean soundSelectEnabled = json == null || bool(json, "sound_select_enabled", true);
         int soundVolume = json != null ? integer(json, "sound_volume", 80, 0, 100) : 80;
@@ -228,7 +236,7 @@ final class Config {
                 Math.max(1, columns), Math.max(0, rowsBelow), shamsi, moduleCards, reducedMotion,
                 vpn, homeSettings, networkPill, liveTvRow, background, wallpaper, wallpapers, wallpaperIntervalMs,
                 places, wallpaperOnline, wallpaperFeed, cacheCleanDays,
-                iconPack, aerialWallpaper, soundNavEnabled, soundSelectEnabled, soundVolume,
+                iconPack, aerialWallpaper, aerialScenes, soundNavEnabled, soundSelectEnabled, soundVolume,
                 sleepTimerMinutes, showWallpaperInfo, applied);
     }
 

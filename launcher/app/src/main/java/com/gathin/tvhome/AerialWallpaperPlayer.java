@@ -35,6 +35,7 @@ final class AerialWallpaperPlayer implements TextureView.SurfaceTextureListener 
 
     private final Context ctx;
     private final ViewGroup container;
+    private java.util.Set<String> sceneFilter = java.util.Collections.emptySet();
     private TextureView textureView;
     private MediaPlayer mediaPlayer;
     private IWallpaperProviderService providerService;
@@ -70,6 +71,13 @@ final class AerialWallpaperPlayer implements TextureView.SurfaceTextureListener 
             List<Wallpaper> result = providerService.getWallpapers();
             int count = result != null ? result.size() : 0;
             Log.d(TAG, "got " + count + " wallpapers (attempt " + (retryCount + 1) + ")");
+            if (result != null) {
+                for (int i = 0; i < Math.min(count, 5); i++) {
+                    Wallpaper w = result.get(i);
+                    Log.d(TAG, "  wallpaper[" + i + "] title=" + w.title
+                            + " desc=" + w.description + " uri=" + w.uri);
+                }
+            }
             if (count > 0) {
                 wallpapers = result;
                 retryCount = 0;
@@ -90,6 +98,7 @@ final class AerialWallpaperPlayer implements TextureView.SurfaceTextureListener 
     }
 
     private void fetchAppleAerials() {
+        final java.util.Set<String> activeFilter = sceneFilter; // capture at call time
         new Thread(() -> {
             // Community sources use GitHub CDN (standard CA) — prepend them so they play first.
             // Apple CDN (sylvan.apple.com) is appended as fallback; it may fail on devices
@@ -110,6 +119,10 @@ final class AerialWallpaperPlayer implements TextureView.SurfaceTextureListener 
                     if (assets == null) continue;
                     for (int i = 0; i < assets.length(); i++) {
                         JSONObject a = assets.getJSONObject(i);
+                        if (!activeFilter.isEmpty()) {
+                            String scene = a.optString("scene", "");
+                            if (!activeFilter.contains(scene)) continue;
+                        }
                         String url = a.optString("url-1080-H264", null);
                         if (url == null || url.isEmpty()) url = a.optString("url-1080-SDR", null);
                         if (url == null || url.isEmpty()) url = a.optString("url", null);
@@ -131,6 +144,10 @@ final class AerialWallpaperPlayer implements TextureView.SurfaceTextureListener 
                     if (assets == null) continue;
                     for (int i = 0; i < assets.length(); i++) {
                         JSONObject a = assets.getJSONObject(i);
+                        if (!activeFilter.isEmpty()) {
+                            String scene = a.optString("scene", "");
+                            if (!activeFilter.contains(scene)) continue;
+                        }
                         String url = a.optString("url-1080-H264", null);
                         if (url == null || url.isEmpty()) url = a.optString("url-1080-SDR", null);
                         if (url == null || url.isEmpty()) url = a.optString("url", null);
@@ -144,7 +161,8 @@ final class AerialWallpaperPlayer implements TextureView.SurfaceTextureListener 
             Collections.shuffle(appleUrls);
             List<String> videoUrls = new ArrayList<>(githubUrls);
             videoUrls.addAll(appleUrls);
-            Log.i(TAG, "Bundled aerial: " + githubUrls.size() + " GitHub + " + appleUrls.size() + " Apple videos");
+            Log.i(TAG, "Bundled aerial: " + githubUrls.size() + " GitHub + " + appleUrls.size()
+                    + " Apple videos (filter=" + (activeFilter.isEmpty() ? "all" : activeFilter) + ")");
             List<Wallpaper> aerialWallpapers = new ArrayList<>();
             for (String url : videoUrls) {
                 Wallpaper w = new Wallpaper();
@@ -187,9 +205,14 @@ final class AerialWallpaperPlayer implements TextureView.SurfaceTextureListener 
         try { return textureView.getBitmap(); } catch (Exception e) { return null; }
     }
 
+    void setSceneFilter(java.util.Set<String> scenes) {
+        this.sceneFilter = scenes != null ? scenes : java.util.Collections.emptySet();
+    }
+
     /** Re-queries the AerialViews service so category/filter changes take effect immediately.
      *  Unbinds and rebinds so AerialViews rebuilds its playlist from current settings. */
     void refresh() {
+        Log.i(TAG, "refresh() called — unbinding and rebinding AerialViews service");
         wallpapers = null;
         wallpaperIndex = 0;
         retryCount = 0;
