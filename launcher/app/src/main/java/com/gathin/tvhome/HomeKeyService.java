@@ -157,24 +157,24 @@ public class HomeKeyService extends AccessibilityService {
         LinearLayout container = new LinearLayout(this);
         container.setOrientation(LinearLayout.VERTICAL);
         container.setGravity(Gravity.CENTER);
-        int hPad = (int) (dp * 40), vPad = (int) (dp * 20);
+        int hPad = (int) (dp * 20), vPad = (int) (dp * 10);
         container.setPadding(hPad, vPad, hPad, vPad);
 
         GradientDrawable bg = new GradientDrawable();
-        bg.setColor(0xE6000000);  // 90% opaque black
-        bg.setCornerRadius(dp * 20);
+        bg.setColor(0x99000000);  // 60% opaque black
+        bg.setCornerRadius(dp * 12);
         container.setBackground(bg);
 
         TextView label = new TextView(this);
         label.setText("TV shutting off in");
         label.setTextColor(0xFFFF9800);   // orange
-        label.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22);
+        label.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
         label.setTypeface(Typeface.DEFAULT_BOLD);
         label.setGravity(Gravity.CENTER);
 
         TextView countdown = new TextView(this);
         countdown.setTextColor(0xFFFFFFFF);
-        countdown.setTextSize(TypedValue.COMPLEX_UNIT_SP, 72);
+        countdown.setTextSize(TypedValue.COMPLEX_UNIT_SP, 44);
         countdown.setTypeface(Typeface.DEFAULT_BOLD);
         countdown.setGravity(Gravity.CENTER);
         countdown.setText("--:--");
@@ -192,8 +192,9 @@ public class HomeKeyService extends AccessibilityService {
                         | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
                         | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT);
-        lp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-        lp.y = (int) (dp * 60);  // 60dp from bottom edge
+        lp.gravity = Gravity.TOP | Gravity.START;
+        lp.x = (int) (dp * 32);
+        lp.y = (int) (dp * 32);
 
         try {
             windowManager.addView(container, lp);
