@@ -37,6 +37,12 @@
         </intent>
         <!-- China-market MIUI TV firmware: the Settings and Wi-Fi pills fall back to Xiaomi's settings app. -->
         <package android:name="com.xiaomi.mitv.settings" />
+        <!-- ADW/Nova-format icon packs installed on the TV. -->
+        <intent>
+            <action android:name="org.adw.launcher.THEMES" />
+        </intent>
+        <!-- Aerial Views — video wallpaper via Projectivity plugin AIDL. -->
+        <package android:name="com.neilturner.aerialviews" />
     </queries>
 
     <application

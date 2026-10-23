@@ -482,6 +482,9 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         adapter = new AppAdapter(this, this, COLUMNS, cfg);
         grid.setAdapter(adapter);
+        if (!cfg.iconPack.isEmpty()) {
+            adapter.setIconPackLoader(new IconPackLoader(getPackageManager(), cfg.iconPack));
+        }
 
         // tvOS layout: push the dock row towards the bottom of the screen, leaving room for
         // rows_below_dock grid rows under it; the rest of the grid stays below until you press Down.
