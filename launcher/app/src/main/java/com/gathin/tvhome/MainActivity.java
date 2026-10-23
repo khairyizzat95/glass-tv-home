@@ -483,9 +483,16 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             View pill = findViewById(id);
             if (pill == null) continue;
             float radius = 21f * density;
-            pill.setBackground(new GlassDrawable(pill, radius, density, glider));
+            if (cfg.aerialWallpaper) {
+                android.graphics.drawable.GradientDrawable pillBg = new android.graphics.drawable.GradientDrawable();
+                pillBg.setColor(0x33FFFFFF);
+                pillBg.setCornerRadius(radius);
+                pill.setBackground(pillBg);
+            } else {
+                pill.setBackground(new GlassDrawable(pill, radius, density, glider));
+                Backdrop.watch(pill);
+            }
             glider.addCompanion(pill);
-            Backdrop.watch(pill);
             pill.setOnFocusChangeListener((v, has) -> {
                 if (has) moveTopHighlight(v);
             });
