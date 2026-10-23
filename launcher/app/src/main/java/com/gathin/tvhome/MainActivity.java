@@ -1730,6 +1730,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
                     File cfgDir = Config.dir(this);
                     hiddenApps = new HashSet<>(hiddenApps);
                     hiddenApps.add(iconPkg);
+                    adapter.setHiddenApps(hiddenApps);
                     org.json.JSONArray arr = new org.json.JSONArray();
                     for (String pkg : hiddenApps) arr.put(pkg);
                     Config.save(cfgDir, "hidden_apps", arr);

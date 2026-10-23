@@ -123,7 +123,7 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
     /** Dock order (config.xml dock_apps, or a theme's config.json). */
     private final List<String> favourites;
     /** Never shown as tiles (res/values/config.xml, hidden_apps). */
-    private final Set<String> hidden;
+    private final Set<String> hidden = new HashSet<>();
     private final boolean showHomeSettings;
     /** Calmer motion for weak GPUs (config.xml, reduced_motion): no overshoot, shorter fades. */
     private final boolean reducedMotion;
@@ -146,7 +146,7 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
         this.listener = listener;
         this.dockSize = dockSize;
         this.favourites = cfg.dockApps;
-        this.hidden = new HashSet<>(cfg.hiddenApps);
+        this.hidden.addAll(cfg.hiddenApps);
         this.showHomeSettings = cfg.showHomeSettingsShortcut;
         this.reducedMotion = cfg.reducedMotion;
         // Tiles keep their identity across reload(), so a focused tile stays on its app instead of
@@ -154,6 +154,12 @@ public class AppAdapter extends RecyclerView.Adapter<AppAdapter.Holder> {
         setHasStableIds(true);
         String saved = ctx.getSharedPreferences(ORDER_PREFS, Context.MODE_PRIVATE).getString(ORDER_KEY, "");
         if (!saved.isEmpty()) arranged.addAll(Arrays.asList(saved.split("\n")));
+    }
+
+    /** Replaces the hidden-apps set; call reload() afterwards to apply. */
+    void setHiddenApps(Set<String> pkgs) {
+        hidden.clear();
+        hidden.addAll(pkgs);
     }
 
     /** Updates the active icon pack; clears the tile cache so icons reload on the next rebuild. */
