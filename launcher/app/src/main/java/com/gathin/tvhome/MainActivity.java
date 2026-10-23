@@ -480,7 +480,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         }
         // The grid only shows the shape on the tray.
         glider.addCompanion(grid, tray.area);
-        for (int id : new int[]{R.id.btnInputs, R.id.btnWifi, R.id.btnSettings}) {
+        for (int id : new int[]{R.id.btnInputs, R.id.btnWifi, R.id.btnSleepTimer, R.id.btnSettings}) {
             View pill = findViewById(id);
             if (pill == null) continue;
             float radius = 21f * density;
@@ -657,6 +657,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         };
         btnInputs.setOnKeyListener(pillKeys);
         btnWifi.setOnKeyListener(pillKeys);
+        if (btnSleepTimer != null) btnSleepTimer.setOnKeyListener(pillKeys);
         btnSettings.setOnKeyListener(pillKeys);
 
         // Hide the glass when focus leaves the tiles.
