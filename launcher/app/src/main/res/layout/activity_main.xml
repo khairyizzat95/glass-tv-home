@@ -146,22 +146,30 @@
             android:maxLines="2"
             android:ellipsize="end" />
 
+        <!-- Dark pill background wrapping the Waktu Solat section for readability -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:orientation="vertical"
+            android:gravity="end"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
+            android:background="@drawable/bg_prayer_pill">
+
         <!-- Waktu Solat Header (e.g. WAKTU SOLAT • 11 JAMADILAWAL 1448H) -->
         <TextView
             android:id="@+id/prayerHeader"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
             android:textColor="#B3FFFFFF"
             android:textSize="12sp"
             android:fontFamily="@font/outfit"
             android:fontVariationSettings="'wght' 600"
             android:letterSpacing="0.14"
-            android:includeFontPadding="false"
-            android:shadowColor="#99000000"
-            android:shadowDx="0"
-            android:shadowDy="1"
-            android:shadowRadius="4" />
+            android:includeFontPadding="false" />
 
         <!-- Waktu Solat Table (6 Columns: Subuh, Syuruk, Zohor, Asar, Maghrib, Isyak) -->
         <LinearLayout
@@ -369,6 +377,7 @@
                     android:shadowDy="1"
                     android:shadowRadius="4" />
             </LinearLayout>
+        </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 

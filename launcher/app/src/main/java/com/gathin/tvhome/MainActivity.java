@@ -1649,14 +1649,7 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
      * back up again.
      */
     private void showAmbient(int color) {
-        if (!ambientShown) {
-            setAmbient(color);
-            ambient.animate().alpha(1f).setDuration(reducedMotion ? 160 : 600)
-                    .setUpdateListener(a -> syncGlassGlow()).start();
-            ambientShown = true;
-        } else if (color != ambientColor) {
-            setAmbient(color, !reducedMotion);
-        }
+        // Color tint disabled — ambient glow is always hidden.
     }
 
     private void hideGlass() {
