@@ -551,6 +551,29 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
             return true;
         });
 
+        // Sleep timer button — cycles presets on click; dims to 50% when timer is off.
+        View btnSleepTimer = findViewById(R.id.btnSleepTimer);
+        if (btnSleepTimer != null) {
+            btnSleepTimer.setOnClickListener(v -> {
+                SleepTimer t = SleepTimer.get();
+                int next = SleepTimer.nextPresetMinutes(t.getActiveMinutes());
+                if (next == 0) { t.cancel(); } else { t.start(next); }
+                updateTimerDisplay();
+                Config.save(Config.dir(this), "sleep_timer_minutes", SleepTimer.get().getActiveMinutes());
+            });
+        }
+        SleepTimer.get().setListener(new SleepTimer.Listener() {
+            @Override public void onTick(long ms) { updateTimerDisplay(); }
+            @Override public void onExpired() {
+                updateTimerDisplay();
+                HomeKeyService.triggerSleep();
+            }
+        });
+        if (cfg.sleepTimerMinutes > 0) {
+            SleepTimer.get().start(cfg.sleepTimerMinutes);
+            updateTimerDisplay();
+        }
+
         // Keep focus on the top bar at its ends and at the top: Android's focus finder would otherwise
         // jump to a tile far below when there is nothing in that direction.
         View.OnKeyListener pillKeys = (v, keyCode, event) -> {
@@ -629,6 +652,29 @@ public class MainActivity extends Activity implements AppAdapter.TileListener {
         } catch (Exception | OutOfMemoryError e) {
             // A bad or huge picture must never take the home screen down; the plain colour stays.
             return null;
+        }
+    }
+
+    /** Swaps the clock/date block for a countdown when the sleep timer is active, or restores the clock. */
+    private void updateTimerDisplay() {
+        SleepTimer t = SleepTimer.get();
+        View clock = findViewById(R.id.clock);
+        View dateBlock = findViewById(R.id.dateBlock);
+        TextView timerDisplay = findViewById(R.id.timerDisplay);
+        View btnSleepTimer = findViewById(R.id.btnSleepTimer);
+        if (t.isActive()) {
+            if (clock != null) clock.setVisibility(View.GONE);
+            if (dateBlock != null) dateBlock.setVisibility(View.GONE);
+            if (timerDisplay != null) {
+                timerDisplay.setVisibility(View.VISIBLE);
+                timerDisplay.setText(SleepTimer.formatMs(t.getRemainingMs()));
+            }
+            if (btnSleepTimer != null) btnSleepTimer.setAlpha(1.0f);
+        } else {
+            if (clock != null) clock.setVisibility(View.VISIBLE);
+            if (dateBlock != null) dateBlock.setVisibility(View.VISIBLE);
+            if (timerDisplay != null) timerDisplay.setVisibility(View.GONE);
+            if (btnSleepTimer != null) btnSleepTimer.setAlpha(0.5f);
         }
     }
 

@@ -61,6 +61,31 @@ public class HomeKeyService extends AccessibilityService {
         return false;
     }
 
+    // ---- Sleep timer integration (fully wired in Task 4) ----
+
+    /** Called by SleepTimer.Listener.onExpired() to put the TV to sleep. */
+    public static void triggerSleep() {
+        Log.d(TAG, "triggerSleep: delegating to sleepScreen");
+        if (!sleepScreen()) {
+            Log.w(TAG, "triggerSleep: HomeKeyService not running — cannot sleep TV");
+        }
+    }
+
+    /** Shows the countdown overlay on top of all apps (implemented in Task 4). */
+    public void showTimerOverlay() {}
+
+    /** Updates the countdown text in the overlay (implemented in Task 4). */
+    public void updateTimerOverlay(long remainingMs) {}
+
+    /** Hides the countdown overlay (implemented in Task 4). */
+    public void hideTimerOverlay() {}
+
+    /** True when the overlay window is currently shown (implemented in Task 4). */
+    public boolean isOverlayShown() { return false; }
+
+    /** Returns the running service instance or null if not connected. */
+    public static HomeKeyService getInstance() { return instance; }
+
     public static void forceStopApp(Context context, String pkg) {
         if (pkg == null || pkg.isEmpty() || pkg.equals(context.getPackageName())) return;
         
